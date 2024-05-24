@@ -15,6 +15,7 @@
 todo:
 1. 兼容iOS16.x
 2. 兼容appex组件
+3. JBDev1.0于年底前发布
 
 注意：JBDev和debugserver_azj的区别在于debugserver_azj只是附加调试，可以调试任意进程。
 
