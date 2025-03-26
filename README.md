@@ -205,7 +205,7 @@ Failed to start remote service "com.apple.debugserver" on device.
 
 ## Introduction
 
-JBDev is a powerful tool for Jailbreak/TrollStore development with Xcode, tested on
+JBDev is a powerful tool for Jailbreak/TrollStore development with Xcode, suppling the same experience as common app development: compile - install - debug app with Xcode, tested on
 * Xcode12-15
 * iOS12-16
 * arm64/arm64e
