@@ -1,0 +1,12 @@
+#!/bin/bash
+
+chown -R root:wheel /Applications/JBDevTestApp.app
+chmod +s /Applications/JBDevTestApp.app/JBDevTestApp
+
+launchctl stop chaoge.jbdevtest
+launchctl load /Library/LaunchDaemons/chaoge.jbdevtest.plist
+launchctl start chaoge.jbdevtest
+
+uicache --path /Applications/JBDevTestApp.app
+exit 0
+

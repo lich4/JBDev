@@ -1,0 +1,9 @@
+Package: chaoge.jbdevtest
+Name: JBDev
+Version: 1.0
+Architecture: iphoneos-arm
+Description: JBDev rootful example
+Maintainer: chaoge
+Author: chaoge
+Section: Apps
+Depends: mobilesubstrate (>= 0.9.5000)

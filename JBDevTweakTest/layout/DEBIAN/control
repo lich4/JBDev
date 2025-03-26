@@ -1,0 +1,9 @@
+Package: chaoge.jbdevtesttweak
+Name: JBDev
+Version: 1.0
+Architecture: iphoneos-arm
+Description: JBDev tweak example
+Maintainer: chaoge
+Author: chaoge
+Section: Tweaks
+Depends: mobilesubstrate (>= 0.9.5000)

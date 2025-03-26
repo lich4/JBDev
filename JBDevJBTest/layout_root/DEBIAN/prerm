@@ -1,0 +1,6 @@
+#!/bin/bash
+
+launchctl unload /Library/LaunchDaemons/chaoge.jbdevtest.plist
+launchctl stop chaoge.jbdevtest
+exit 0
+

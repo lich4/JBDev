@@ -1,0 +1,10 @@
+#!/bin/bash
+
+launchctl stop com.apple.mobile.lockdown
+launchctl stop com.apple.mobile.installd
+launchctl start com.apple.mobile.lockdown
+launchctl start com.apple.mobile.installd
+launchctl unload /Library/LaunchDaemons/chaoge.jbdev.plist
+launchctl stop chaoge.jbdev
+exit 0
+

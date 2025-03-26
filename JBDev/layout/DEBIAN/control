@@ -1,0 +1,11 @@
+Package: chaoge.jbdev
+Name: JBDev
+Version: 1.0
+Architecture: iphoneos-arm
+Description: Jailbreak development tool for XCode
+SileoDepiction: Jailbreak development tool for XCode
+Depiction: Jailbreak development tool for XCode
+Maintainer: chaoge
+Author: chaoge
+Section: Tweaks
+Depends: mobilesubstrate (>= 0.9.5000)
