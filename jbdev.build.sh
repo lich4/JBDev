@@ -150,7 +150,7 @@ function doPackage() {
     cp -f jbdev.plist ${TARGET_PATH}/ # 强制拷贝防止sparse.ipa不带文件
 }
 
-echo "........ Start building with theos ........"
+echo "........ Start building ........"
 getType || exit -1
 checkEnv || exit -1
 if [ x$UTIL = "xlogos" ]; then
@@ -164,5 +164,5 @@ fi
 if [ x${JBDEV_PACKAGE} = "xYES" ]; then
     doPackage || exit -1
 fi
-echo "........ Done building with theos ........"
+echo "........ Done building ........"
 

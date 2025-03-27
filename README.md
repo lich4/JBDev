@@ -38,6 +38,14 @@ JBDev用于Xcode越狱开发及巨魔开发，提供和普通App一样的开发�
 * 附加调试，进程已启动情况下附加调试，lldb使用方式`debugserver --attach=[pid|name]`，Xcode同理
 * 等待调试，等待进程启动并自动附加调试，lldb使用方式`debugserver -waitfor=[name]`，Xcode同理
 
+### 测试&使用
+
+* iOS端越狱；安装appsync(可选，用于调试普通未签名App)
+* Mac端安装支持隐根的Theos，参考`https://github.com/roothide/Developer`
+* 在`https://github.com/lich4/JBDev/releases`中选择合适的`JBDeb.deb`安装
+* 测试`JBDevJBTest`，将变量`THEOS`改成Theos安装路径
+* 全新创建你自己的项目，并使用JBDev开发
+
 ### JBDev核心
 
 > JBDev核心文件
@@ -223,6 +231,14 @@ JBDev is a powerful tool for Jailbreak/TrollStore development with Xcode, suppli
 * For Jailbreak development, JBDev use Theos to package 
 * For TrollStore development, make sure TrollStore is installed
 
+### Test&Usage
+
+* Get ready with a jailbreak iDevice
+* Install appsync(optional); Download and install `JBDeb.deb` from `https://github.com/lich4/JBDev/releases`
+* Install Theos on macOS, `https://github.com/roothide/Developer`
+* Test the demo `JBDevJBTest` with `THEOS` setting to the install path of Theos
+* Enjoy
+
 ## Jailbreak development demo
 
 See JBDevJBTest for details
@@ -275,7 +291,7 @@ See JBDevJBTest for details
 
 > general
 * For tweak target, set `Runpath Search Paths` `Header Search Paths` `Framework Search Paths`
-* For tweak target, link `libsubstrate.tbd` for tweak target
+* For tweak target, link `libsubstrate.tbd`
 > rootful
 * For all targets, remove `THEOS_PACKAGE_SCHEME` from `Build Settings`
 > rootless

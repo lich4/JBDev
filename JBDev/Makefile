@@ -15,7 +15,7 @@ include $(THEOS_MAKE_PATH)/tweak.mk
 TOOL_NAME = jbdev_daemon
 ${TOOL_NAME}_FILES = jbdev_daemon.mm utils.mm
 ${TOOL_NAME}_CFLAGS = -fobjc-arc -std=c++11
-${TOOL_NAME}_LDFLAGS = -framework CoreServices -fobjc-link-runtime MobileContainerManager.tbd
+${TOOL_NAME}_LDFLAGS = -framework CoreServices
 ${TOOL_NAME}_CODESIGN_FLAGS = -Sjbdev_daemon.plist
 ${TOOL_NAME}_INSTALL_PATH = /usr/bin
 include $(THEOS_MAKE_PATH)/tool.mk
