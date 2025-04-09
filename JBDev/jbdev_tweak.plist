@@ -6,8 +6,8 @@
 	<dict>
 		<key>Executables</key>
 		<array>
-			<string>installd</string>
 			<string>lockdownd</string>
+			<string>streaming_zip_conduit</string>
 		</array>
 	</dict>
 </dict>

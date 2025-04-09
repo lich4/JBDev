@@ -2,25 +2,47 @@
 #include <dlfcn.h>
 #include "jbdev.h"
 
-static BOOL isJBDev(NSString* pkgPath) {
+enum InstallTargetType {
+    NormalTarget                    = 1,    // Developer/System/Customer
+    PlaceholderTarget               = 2,
+    DowngradeToPlaceholderTarget    = 3,
+};
+
+@interface MIInstallOptions : NSObject
+- (unsigned)installTargetType;
+- (NSString*)bundleIdentifier;
+- (NSDictionary*)legacyOptionsDictionary;
+- (unsigned)lsInstallType;
+- (BOOL)isDeveloperInstall;
+- (BOOL)isSystemAppInstall;
+@end
+
+@interface IXAppInstallCoordinator : NSObject
+- (void)installApplication:(NSURL*)bundleURL consumeSource:(BOOL)consumeSource options:(MIInstallOptions*)options
+    legacyProgressBlock:(void(^)(NSError* err))progressBlock completion:(void(^)(NSString* bid, NSError* err))completion;
+@end
+
+@interface LSApplicationWorkspace : NSObject
+- (BOOL)installApplication:(NSURL*)bundleURL withOptions:(NSDictionary*)options error:(NSError**)error 
+    usingBlock:(void(^)(NSError* err))block;
+@end
+
+static NSDictionary* getPkgInfo(NSString* pkgPath) {
     // pkgPath:
     //  /var/mobile/Media/PublicStaging/xx.app
     //  /var/mobile/Media/PublicStaging/xx.app_sparse.ipa
     @autoreleasepool {
+        __block NSDictionary* result = nil;
         dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-        __block int ret_status = -1;
-        __block int pkg_type = PKG_TYPE_APP;
+        __block BOOL handled = NO;
         setIPCHandler(@"jbdev.res.info_pkg", ^(NSString* name, NSDictionary* info) {
             @autoreleasepool {
                 setIPCHandler(@"jbdev.res.info_pkg", ^(NSString* name, NSDictionary* info) {});
                 NSNumber* status = info[@"status"];
-                ret_status = status.intValue;
                 if (status.intValue == 0) {
-                    NSNumber* data = info[@"data"];
-                    pkg_type = data.intValue;
-                } else {
-                    NSLog(@"%@ isJBDev info_pkg err %@", log_prefix, status);
+                    result = [info[@"data"] copy];
                 }
+                handled = YES;
                 dispatch_semaphore_signal(sema);
             }
         });
@@ -28,97 +50,114 @@ static BOOL isJBDev(NSString* pkgPath) {
             @"pkg_path": pkgPath
         });
         dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC)); // 1sec is enough
-        if (ret_status == -1) { // timeout, fallback to origin
-            NSLog(@"%@ isJBDev info_pkg timeout", log_prefix);
-            return NO;
-        } else if (pkg_type == PKG_TYPE_APP) {
-            NSLog(@"%@ isJBDev info_pkg skip app", log_prefix);
-            return NO;
+        if (!handled) { // timeout, fallback to origin
+            NSLog(@"%@ getPkgInfo timeout", log_prefix);
+            return nil;
         }
-        return YES;
+        return result;
     }
 }
 
-static void (*old_MIClientConnection_installURL_withOptions_completion)(Class cls, SEL sel, NSURL* url, NSDictionary* options, void(^block)(NSDictionary* receipt, NSError* err)) = 0;
-static void new_MIClientConnection_installURL_withOptions_completion(Class cls, SEL sel, NSURL* url, NSDictionary* options, void(^block)(NSDictionary* receipt, NSError* err)) {
+static BOOL isJBDev(NSDictionary* infoDic) {
     @autoreleasepool {
-        NSString* pkgPath = url.path;
-        NSLog(@"%@ MIClientConnection installURL %@", log_prefix, pkgPath);
-        MIClientConnection* conn = (MIClientConnection*)cls;
-        if (!isJBDev(pkgPath)) {
-            old_MIClientConnection_installURL_withOptions_completion(cls, sel, url, options, block); // 放行给AppSync处理
-            return;
+        if (infoDic == nil || infoDic[@"jbdev"] == nil) {
+            return NO;
         }
-        __block BOOL handled = NO;
-        dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-        setIPCHandler(@"jbdev.res.inst_pkg", ^(NSString* name, NSDictionary* info) { // installd安装是顺序的，所以这里不做同步处理
-            @autoreleasepool {
-                setIPCHandler(@"jbdev.res.inst_pkg", ^(NSString* name, NSDictionary* info) {});
-                handled = YES;
-                dispatch_semaphore_signal(sema);
-                NSNumber* status = info[@"status"];
-                if (status.intValue == 0) {
-                    NSDictionary* receipt = @{
-                        @"InstalledAppInfoArray": @[
-                            info[@"data"]
-                        ],
-                    };
-                    [conn sendDelegateMessagesComplete];
-                    block(receipt, nil);
-                } else {
-                    NSError* err = [NSError errorWithDomain:@"jbdev" code:status.intValue userInfo:nil];
-                    [conn sendDelegateMessagesComplete];
-                    block(nil, err);
-                }
-            }
-        });
-        sendIPC(@"jbdev.req.inst_pkg", @{ // installd -> jbdev_daemons
-            @"pkg_path": pkgPath
-        });
-        dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 60 * NSEC_PER_SEC));
-        if (!handled) {
-            NSLog(@"%@ MIClientConnection inst_pkg timeout", log_prefix);
-            old_MIClientConnection_installURL_withOptions_completion(cls, sel, url, options, block);
+        NSDictionary* jbdevDic = infoDic[@"jbdev"];
+        NSString* pkgType = [jbdevDic[@"type"] lowercaseString];
+        if ([pkgType isEqualToString:@"jailbreak"] || [pkgType isEqualToString:@"trollstore"]) {
+            return YES;
         }
+        return NO;
     }
 }
 
-static void (*old_MIClientConnection_installURL_identity_targetingDomain_options_returningResultInfo_completion)(Class cls, SEL sel, NSURL* url, id identity, uint64_t domain, NSDictionary* options, BOOL retResult, void(^block)(BOOL hasReceipt, NSArray* receipt, id promise, NSError* err)) = 0;
-static void new_MIClientConnection_installURL_identity_targetingDomain_options_returningResultInfo_completion(Class cls, SEL sel, NSURL* url, id identity, uint64_t domain, NSDictionary* options, BOOL retResult, void(^block)(BOOL hasReceipt, NSArray* receipt, id promise, NSError* err)) {
+static int instPkg(NSString* pkgPath) {
     @autoreleasepool {
-        NSString* pkgPath = url.path;
-        NSLog(@"%@ MIClientConnection installURL %@", log_prefix, pkgPath);
-        MIClientConnection* conn = (MIClientConnection*)cls;
-        if (!isJBDev(pkgPath)) {
-            old_MIClientConnection_installURL_identity_targetingDomain_options_returningResultInfo_completion(cls, sel, url, identity, domain, options, retResult, block);
-            return;
-        }
-        __block BOOL handled = NO;
+        __block int result = -1;
         dispatch_semaphore_t sema = dispatch_semaphore_create(0);
         setIPCHandler(@"jbdev.res.inst_pkg", ^(NSString* name, NSDictionary* info) {
             @autoreleasepool {
                 setIPCHandler(@"jbdev.res.inst_pkg", ^(NSString* name, NSDictionary* info) {});
-                handled = YES;
-                dispatch_semaphore_signal(sema);
                 NSNumber* status = info[@"status"];
                 if (status.intValue == 0) {
-                    [conn sendDelegateMessagesComplete];
-                    block(YES, info[@"data"], nil, nil);
+                    result = 1;
                 } else {
-                    NSError* err = [NSError errorWithDomain:@"jbdev" code:status.intValue userInfo:nil];
-                    [conn sendDelegateMessagesComplete];
-                    NSLog(@"%@ MIClientConnection inst_pkg err %@", log_prefix, status);
-                    block(NO, nil, nil, err);
+                    result = 0;
                 }
+                dispatch_semaphore_signal(sema);
             }
         });
-        sendIPC(@"jbdev.req.inst_pkg", @{
+        sendIPC(@"jbdev.req.inst_pkg", @{ // streaming_zip_conduit -> jbdev_daemons
             @"pkg_path": pkgPath
         });
         dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 60 * NSEC_PER_SEC));
-        if (!handled) { // timeout
-            old_MIClientConnection_installURL_identity_targetingDomain_options_returningResultInfo_completion(cls, sel, url, identity, domain, options, retResult, block);
+        if (result == -1) { // timeout, fallback to origin
+            NSLog(@"%@ instPkg timeout", log_prefix);
         }
+        return result;
+    }
+}
+
+static BOOL (*old_LSApplicationWorkspace_installApplication_withOptions_error_usingBlock)(
+    Class cls, SEL sel, NSURL* bundleURL, NSDictionary* options, NSError** error, void(^block)(NSError* err)) = 0;
+static BOOL new_LSApplicationWorkspace_installApplication_withOptions_error_usingBlock(
+    Class cls, SEL sel, NSURL* bundleURL, NSDictionary* options, NSError** error, void(^block)(NSError* err)) {
+    @autoreleasepool {
+        if (![options[@"PackageType"] isEqualToString:@"Developer"]) {
+            return old_LSApplicationWorkspace_installApplication_withOptions_error_usingBlock(
+                cls, sel, bundleURL, options, error, block);
+        }
+        NSString* bundlePath = bundleURL.path;
+        NSDictionary* infoDic = getPkgInfo(bundlePath);
+        if (!isJBDev(infoDic)) { // 放行给AppSync处理
+            return old_LSApplicationWorkspace_installApplication_withOptions_error_usingBlock(
+                cls, sel, bundleURL, options, error, block);
+        }
+        int status = instPkg(bundlePath);
+        if (status == 0) {
+            NSError* err = [NSError errorWithDomain:@"jbdev" code:0x1000 userInfo:nil];
+            block(err);
+            NSLog(@"%@ installApplication err", log_prefix);
+            return NO;
+        } else if (status == 1) {
+            NSLog(@"%@ installApplication suc", log_prefix);
+            return YES;
+        }
+        return old_LSApplicationWorkspace_installApplication_withOptions_error_usingBlock(
+            cls, sel, bundleURL, options, error, block);
+    }
+}
+
+static void (*old_IXAppInstallCoordinator_installApplication_consumeSource_options_legacyProgressBlock_completion)(
+    Class cls, SEL sel, NSURL* bundleURL, BOOL consumeSource, MIInstallOptions* options, void(^progressBlock)(NSError* err), 
+    void(^completion)(NSString* bid, NSError* err)) = 0;
+static void new_IXAppInstallCoordinator_installApplication_consumeSource_options_legacyProgressBlock_completion(
+    Class cls, SEL sel, NSURL* bundleURL, BOOL consumeSource, MIInstallOptions* options, void(^progressBlock)(NSError* err), 
+    void(^completion)(NSString* bid, NSError* err)) {
+    @autoreleasepool {
+        if (!options.isDeveloperInstall) {
+            return old_IXAppInstallCoordinator_installApplication_consumeSource_options_legacyProgressBlock_completion(
+                cls, sel, bundleURL, consumeSource, options, progressBlock, completion);
+        }
+        NSString* bundlePath = bundleURL.path;
+        NSDictionary* infoDic = getPkgInfo(bundlePath);
+        if (!isJBDev(infoDic)) { // 放行给AppSync处理
+            return old_IXAppInstallCoordinator_installApplication_consumeSource_options_legacyProgressBlock_completion(
+                cls, sel, bundleURL, consumeSource, options, progressBlock, completion);
+        }
+        int status = instPkg(bundlePath);
+        if (status == 0) {
+            NSError* err = [NSError errorWithDomain:@"jbdev" code:0x1000 userInfo:nil];
+            NSLog(@"%@ installApplication err", log_prefix);
+            return completion(nil, err);
+        } else if (status == 1) {
+            NSString* bid = infoDic[@"CFBundleIdentifier"];
+            NSLog(@"%@ installApplication suc", log_prefix);
+            return completion(bid, nil);
+        }
+        return old_IXAppInstallCoordinator_installApplication_consumeSource_options_legacyProgressBlock_completion(
+            cls, sel, bundleURL, consumeSource, options, progressBlock, completion);
     }
 }
 
@@ -138,7 +177,7 @@ static Boolean new_SMJobSubmit(CFStringRef domain, CFDictionaryRef job, CFTypeID
                     margv[0] = @(JBROOT("/usr/bin/debugserver_azj12"));
                 } else if (mv == 13 || mv == 14) {
                     margv[0] = @(JBROOT("/usr/bin/debugserver_azj14"));
-                } else if (mv == 15 || mv == 16) {
+                } else if (mv >= 15) {
                     margv[0] = @(JBROOT("/usr/bin/debugserver_azj15"));
                 } else {
                     NSLog(@"%@ unsupported iOS version:%d", log_prefix, mv);
@@ -155,19 +194,24 @@ static Boolean new_SMJobSubmit(CFStringRef domain, CFDictionaryRef job, CFTypeID
 class Ctor {
 public:
     Ctor() {
-        if (0 == strcmp(__progname, "installd")) {
-            Class MIClientConnection = objc_getClass("MIClientConnection");
-            if (MIClientConnection != nil) {
-                if ([MIClientConnection instancesRespondToSelector:@selector(installURL:withOptions:completion:)]) {
-                    MSHookMessageEx(MIClientConnection, @selector(installURL:withOptions:completion:),
-                        (IMP)new_MIClientConnection_installURL_withOptions_completion,
-                        (IMP*)&old_MIClientConnection_installURL_withOptions_completion);
-                } else if ([MIClientConnection instancesRespondToSelector:@selector(installURL:identity:targetingDomain:options:returningResultInfo:completion:)]) {
-                    // for iOS16+
-                    MSHookMessageEx(MIClientConnection,
-                        @selector(installURL:identity:targetingDomain:options:returningResultInfo:completion:),
-                        (IMP)new_MIClientConnection_installURL_identity_targetingDomain_options_returningResultInfo_completion,
-                        (IMP*)&old_MIClientConnection_installURL_identity_targetingDomain_options_returningResultInfo_completion);
+        if (0 == strcmp(__progname, "streaming_zip_conduit")) {
+            Class IXAppInstallCoordinator = objc_getClass("IXAppInstallCoordinator");
+            if (IXAppInstallCoordinator != nil) { // iOS16+
+                if ([IXAppInstallCoordinator respondsToSelector:@selector(installApplication:consumeSource:options:legacyProgressBlock:completion:)]) {
+                    MSHookMessageEx(object_getClass(IXAppInstallCoordinator), 
+                        @selector(installApplication:consumeSource:options:legacyProgressBlock:completion:),
+                        (IMP)new_IXAppInstallCoordinator_installApplication_consumeSource_options_legacyProgressBlock_completion,
+                        (IMP*)&old_IXAppInstallCoordinator_installApplication_consumeSource_options_legacyProgressBlock_completion);
+                }
+            } else {
+                Class LSApplicationWorkspace = objc_getClass("LSApplicationWorkspace");
+                if (LSApplicationWorkspace != nil) {
+                    if ([LSApplicationWorkspace instancesRespondToSelector:@selector(installApplication:withOptions:error:usingBlock:)]) {
+                        MSHookMessageEx(LSApplicationWorkspace, 
+                            @selector(installApplication:withOptions:error:usingBlock:),
+                            (IMP)new_LSApplicationWorkspace_installApplication_withOptions_error_usingBlock,
+                            (IMP*)&old_LSApplicationWorkspace_installApplication_withOptions_error_usingBlock);
+                    }
                 }
             }
         } else if (0 == strcmp(__progname, "lockdownd")) {

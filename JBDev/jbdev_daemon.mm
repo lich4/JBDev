@@ -219,7 +219,7 @@ static int instIpa(NSString* tipaPath, NSString* __strong* err) {
             return -1;
         }
         NSString* stdOut = nil;
-        NSArray* cmdArgv = @[helperPath, @"install", getRootFSPath(tipaPath)];
+        NSArray* cmdArgv = @[helperPath, @"install", @"force", getRootFSPath(tipaPath)];
         int ret = spawn(cmdArgv, &stdOut, 0);
         NSLog(@"%@ instIpa spawn %@ -> %d", log_prefix, [cmdArgv componentsJoinedByString:@" "], ret);
         fileLog(log_path, @"%@ spawn %@ -> %d\n", getDateTime(), [cmdArgv componentsJoinedByString:@" "], ret);
@@ -292,6 +292,7 @@ static void init_env() {
 
 int main(int argc, char** argv) {
     init_env();
+    fileLog(log_path, @"%@ JBDev start\n", getDateTime());
     setIPCHandler(@"jbdev.req.info_pkg", ^(NSString* name, NSDictionary* info) {
         @autoreleasepool {
             NSString* pkgPath = info[@"pkg_path"];
@@ -307,10 +308,9 @@ int main(int argc, char** argv) {
                 NSDictionary* jbdevDic = infoDic[@"jbdev"];
                 NSLog(@"%@ info_pkg %@ pkgType: %@", log_prefix, pkgPath, jbdevDic[@"type"]);
                 fileLog(log_path, @"%@ info_pkg %@ pkgType: %@\n", getDateTime(), pkgPath, jbdevDic[@"type"]);
-                int pkg_type = getPkgType(jbdevDic);
                 sendIPC(@"jbdev.res.info_pkg", @{
                     @"status": @0,
-                    @"data": @(pkg_type)
+                    @"data": infoDic,
                 });
             }
         }

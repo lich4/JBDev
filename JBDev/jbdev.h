@@ -22,12 +22,6 @@ enum PKG_TYPE {
     PKG_TYPE_TROLLSTORE,    // 巨魔App
 };
 
-@interface MIClientConnection: NSObject
-- (void)sendDelegateMessagesComplete;
-- (void)installURL:(NSURL*)url withOptions:(NSDictionary*)options completion:(void(^)(NSDictionary* receipt, NSError* err))block;
-- (void)installURL:(NSURL*)url identity:(id)identity targetingDomain:(uint64_t)domain options:(NSDictionary*)options returningResultInfo:(BOOL)retResult completion:(void(^)(BOOL hasReceipt, NSArray* receipt, id promise, NSError* err))block;
-@end
-
 extern const char* __progname;
 static NSString* log_prefix = @PRODUCT;
 static NSString* log_path   = @"/tmp/jbdev.log";

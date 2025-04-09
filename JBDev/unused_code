@@ -1,0 +1,165 @@
+
+@interface LSRecord : NSObject
+@end
+
+@interface LSBundleRecord : LSRecord
+@end
+
+@interface LSApplicationRecord : LSBundleRecord
+- (instancetype)initWithURL:(NSURL*)bundleURL allowPlaceholder:(BOOL)allow error:(NSError**)error;
+@end
+
+@interface LSRecordPromise : NSObject
+- (instancetype)initWithRecord:(LSRecord*)record error:(NSError**)error;
+@end
+
+typedef void (^InstCompletion)(NSDictionary* receipt, NSError* err);
+typedef void (^InstCompletion16)(BOOL hasReceipt, NSArray* receipt, LSRecordPromise* promise, NSError* err);
+
+@interface MIClientConnection: NSObject
+- (void)sendDelegateMessagesComplete;
+- (void)installURL:(NSURL*)bundleURL withOptions:(NSDictionary*)options completion:(InstCompletion)completion;
+- (void)installURL:(NSURL*)bundleURL identity:(id)identity targetingDomain:(uint64_t)domain options:(MIInstallOptions*)options 
+    returningResultInfo:(BOOL)retResult completion:(InstCompletion16)completion;
+@end
+
+static void (*old_MIClientConnection_installURL_withOptions_completion)(
+    Class cls, SEL sel, NSURL* bundleURL, NSDictionary* options, InstCompletion completion) = 0;
+static void new_MIClientConnection_installURL_withOptions_completion(
+    Class cls, SEL sel, NSURL* bundleURL, NSDictionary* options, InstCompletion completion) {
+    @autoreleasepool {
+        NSString* pkgPath = bundleURL.path;
+        NSLog(@"%@ MIClientConnection installURL %@", log_prefix, pkgPath);
+        MIClientConnection* conn = (MIClientConnection*)cls;
+        if (!isJBDev(pkgPath)) { // 放行给AppSync处理
+            return old_MIClientConnection_installURL_withOptions_completion(cls, sel, bundleURL, options, completion);
+        }
+        __block BOOL handled = NO;
+        dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+        // installd安装是顺序的，所以这里不做同步处理
+        setIPCHandler(@"jbdev.res.inst_pkg", ^(NSString* name, NSDictionary* info) {
+            @autoreleasepool {
+                setIPCHandler(@"jbdev.res.inst_pkg", ^(NSString* name, NSDictionary* info) {});
+                handled = YES;
+                dispatch_semaphore_signal(sema);
+                NSNumber* status = info[@"status"];
+                if (status.intValue == 0) {
+                    NSDictionary* receipt = @{
+                        @"InstalledAppInfoArray": @[
+                            info[@"data"]
+                        ],
+                    };
+                    [conn sendDelegateMessagesComplete];
+                    return completion(receipt, nil);
+                } else {
+                    NSError* err = [NSError errorWithDomain:@"jbdev" code:status.intValue userInfo:nil];
+                    [conn sendDelegateMessagesComplete];
+                    return completion(nil, err);
+                }
+            }
+        });
+        sendIPC(@"jbdev.req.inst_pkg", @{ // installd -> jbdev_daemons
+            @"pkg_path": pkgPath
+        });
+        dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 60 * NSEC_PER_SEC));
+        if (!handled) {
+            NSLog(@"%@ MIClientConnection inst_pkg timeout", log_prefix);
+            return old_MIClientConnection_installURL_withOptions_completion(cls, sel, bundleURL, options, completion);
+        }
+    }
+}
+
+static void (*old_MIClientConnection_installURL_identity_targetingDomain_options_returningResultInfo_completion)(
+    Class cls, SEL sel, NSURL* bundleURL, id identity, uint64_t domain, MIInstallOptions* options, BOOL retResult, 
+    InstCompletion16 completion) = 0;
+static void new_MIClientConnection_installURL_identity_targetingDomain_options_returningResultInfo_completion(
+    Class cls, SEL sel, NSURL* bundleURL, id identity, uint64_t domain, MIInstallOptions* options, BOOL retResult, 
+    InstCompletion16 completion) {
+    @autoreleasepool {
+        // iOS16+安装过程分2步:
+        //  phase1: options.PackageType = Placeholder
+        //  phase2: options.PackageType = Developer
+        if (!options.isDeveloperInstall) { // only care about phase2
+             old_MIClientConnection_installURL_identity_targetingDomain_options_returningResultInfo_completion(
+                cls, sel, bundleURL, identity, domain, options, retResult, completion);
+        }
+        NSString* pkgPath = bundleURL.path;
+        NSLog(@"%@ MIClientConnection installURL %@", log_prefix, pkgPath);
+        MIClientConnection* conn = (MIClientConnection*)cls;
+        if (!isJBDev(pkgPath)) {
+            // 放行给AppSync处理
+            return old_MIClientConnection_installURL_identity_targetingDomain_options_returningResultInfo_completion(
+                cls, sel, bundleURL, identity, domain, options, retResult, completion);
+        }
+        __block BOOL handled = NO;
+        dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+        setIPCHandler(@"jbdev.res.inst_pkg", ^(NSString* name, NSDictionary* info) {
+            @autoreleasepool {
+                setIPCHandler(@"jbdev.res.inst_pkg", ^(NSString* name, NSDictionary* info) {});
+                handled = YES;
+                dispatch_semaphore_signal(sema);
+                NSNumber* status = info[@"status"];
+                if (status.intValue == 0) {
+                    [conn sendDelegateMessagesComplete];
+                    // For original installd, returningResultInfo=NO => receipt=nil
+                    NSDictionary* appInfo = info[@"data"];
+                    NSURL* bundleURL = [NSURL fileURLWithPath:appInfo[@"Path"]];
+                    NSError* err = nil;
+                    LSApplicationRecord* record = [[objc_getClass("LSApplicationRecord") alloc] initWithURL:bundleURL 
+                        allowPlaceholder:NO error:&err];
+                    if (err != nil) {
+                        NSLog(@"%@ MIClientConnection record init failed", log_prefix);
+                        [conn sendDelegateMessagesComplete];
+                        return completion(NO, nil, nil, err);
+                    }
+                    LSRecordPromise* promise = [[objc_getClass("LSRecordPromise") alloc] initWithRecord:record error:&err];
+                    if (err != nil) {
+                        NSLog(@"%@ MIClientConnection promise init failed", log_prefix);
+                        [conn sendDelegateMessagesComplete];
+                        return completion(NO, nil, nil, err);
+                    }
+                    return completion(YES, info[@"data"], promise, nil);
+                } else {
+                    NSError* err = [NSError errorWithDomain:@"jbdev" code:status.intValue userInfo:nil];
+                    [conn sendDelegateMessagesComplete];
+                    return completion(NO, nil, nil, err);
+                }
+            }
+        });
+        sendIPC(@"jbdev.req.inst_pkg", @{
+            @"pkg_path": pkgPath
+        });
+        dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 60 * NSEC_PER_SEC));
+        if (!handled) { // timeout
+            NSLog(@"%@ MIClientConnection inst_pkg timeout", log_prefix);
+            return old_MIClientConnection_installURL_identity_targetingDomain_options_returningResultInfo_completion(
+                cls, sel, bundleURL, identity, domain, options, retResult, completion);
+        }
+    }
+}
+
+class Ctor {
+public:
+    Ctor() {
+        if (0 == strcmp(__progname, "installd")) {
+            Class MIClientConnection = objc_getClass("MIClientConnection");
+            if (MIClientConnection != nil) {
+                if ([MIClientConnection instancesRespondToSelector:@selector(installURL:withOptions:completion:)]) {
+                    MSHookMessageEx(MIClientConnection, @selector(installURL:withOptions:completion:),
+                        (IMP)new_MIClientConnection_installURL_withOptions_completion,
+                        (IMP*)&old_MIClientConnection_installURL_withOptions_completion);
+                } else if ([MIClientConnection instancesRespondToSelector:@selector(installURL:identity:targetingDomain:options:returningResultInfo:completion:)]) {
+                    // for iOS16+
+                    MSHookMessageEx(MIClientConnection,
+                        @selector(installURL:identity:targetingDomain:options:returningResultInfo:completion:),
+                        (IMP)new_MIClientConnection_installURL_identity_targetingDomain_options_returningResultInfo_completion,
+                        (IMP*)&old_MIClientConnection_installURL_identity_targetingDomain_options_returningResultInfo_completion);
+                }
+            }
+        } else if (0 == strcmp(__progname, "lockdownd")) {
+            void* SMJobSubmit = dlsym(RTLD_DEFAULT, "SMJobSubmit");
+            MSHookFunction((void*)SMJobSubmit, (void*)new_SMJobSubmit, (void**)&old_SMJobSubmit);
+        }
+    }
+} ctor;
+

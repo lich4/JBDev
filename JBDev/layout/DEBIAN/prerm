@@ -2,9 +2,11 @@
 
 launchctl stop com.apple.mobile.lockdown
 launchctl stop com.apple.mobile.installd
+launchctl stop com.apple.streaming_zip_conduit
 launchctl start com.apple.mobile.lockdown
 launchctl start com.apple.mobile.installd
-launchctl unload /Library/LaunchDaemons/chaoge.jbdev.plist
+launchctl start com.apple.streaming_zip_conduit
+launchctl unload /var/jb/Library/LaunchDaemons/chaoge.jbdev.plist
 launchctl stop chaoge.jbdev
 exit 0
 
