@@ -231,6 +231,15 @@ Errors were encountered while processing:
 
 ---
 
+Xcode编译错误
+```
+error: Sandbox: bash(27852) deny(1) file-read-data /path/to/jbdev.build.sh
+```
+* 原因: Xcode15默认开启`User Script Sandboxing`
+* 解决: 在`Build Settings`中禁用`User Script Sandboxing`
+
+---
+
 Xcode一直安装不停止
 * 解决: 杀掉iOS进程`streaming_zip_conduit/installd`
 
@@ -490,6 +499,15 @@ Errors were encountered while processing:
 ```
 * Reason: The deb package does not match rootful/rootless/roothide jailbreak
 * Fix: Use the corresponding Xcode settings to compile deb for rootful/rootless/roothide jailbreak
+
+---
+
+Xcode build error
+```
+error: Sandbox: bash(27852) deny(1) file-read-data /path/to/jbdev.build.sh
+```
+* Reason: From Xcode15 `User Script Sandboxing` is enabled by default
+* Fix: Disable `User Script Sandboxing` in `Build Settings`
 
 ---
 
