@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		180F10A52D8F087C0039F707 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 180F10A42D8F087C0039F707 /* main.m */; };
 		180F10C12D9041A10039F707 /* JBDevTestTweak.m in Sources */ = {isa = PBXBuildFile; fileRef = 180F10C02D9041A10039F707 /* JBDevTestTweak.m */; };
+		18FD13D12DA6441000A5405F /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 18FD13D02DA6441000A5405F /* main.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildRule section */
@@ -39,12 +39,12 @@
 /* Begin PBXFileReference section */
 		180F108F2D8F087A0039F707 /* FakeApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FakeApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		180F10A32D8F087C0039F707 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		180F10A42D8F087C0039F707 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		180F10AF2D8F09470039F707 /* JBDevTestTweak.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = JBDevTestTweak.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		180F10B82D8F09640039F707 /* jbdev.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = jbdev.plist; sourceTree = "<group>"; };
 		180F10B92D8F09640039F707 /* jbdev.build.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = jbdev.build.sh; sourceTree = "<group>"; };
 		180F10C02D9041A10039F707 /* JBDevTestTweak.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JBDevTestTweak.m; sourceTree = "<group>"; };
 		189D6BBF2D93E24000AC50A7 /* layout */ = {isa = PBXFileReference; lastKnownFileType = folder; path = layout; sourceTree = "<group>"; };
+		18FD13D02DA6441000A5405F /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -89,8 +89,8 @@
 		180F10912D8F087A0039F707 /* FakeApp */ = {
 			isa = PBXGroup;
 			children = (
+				18FD13D02DA6441000A5405F /* main.m */,
 				180F10A32D8F087C0039F707 /* Info.plist */,
-				180F10A42D8F087C0039F707 /* main.m */,
 			);
 			path = FakeApp;
 			sourceTree = "<group>";
@@ -262,7 +262,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				180F10A52D8F087C0039F707 /* main.m in Sources */,
+				18FD13D12DA6441000A5405F /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

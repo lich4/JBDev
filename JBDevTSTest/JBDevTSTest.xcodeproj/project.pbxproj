@@ -31,7 +31,7 @@
 		1891456A2D8BB25D003D1AC8 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		189145A82D8C00AF003D1AC8 /* jbdev.build.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = jbdev.build.sh; sourceTree = "<group>"; };
 		189145AA2D8C00D6003D1AC8 /* jbdev.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = jbdev.plist; sourceTree = "<group>"; };
-		189145AC2D8C08AA003D1AC8 /* JBDevTestTS.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = JBDevTestTS.plist; sourceTree = "<group>"; };
+		189145AC2D8C08AA003D1AC8 /* JBDevTestTS.ent */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = JBDevTestTS.ent; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -77,7 +77,7 @@
 				189145662D8BB25D003D1AC8 /* LaunchScreen.storyboard */,
 				189145692D8BB25D003D1AC8 /* Info.plist */,
 				1891456A2D8BB25D003D1AC8 /* main.m */,
-				189145AC2D8C08AA003D1AC8 /* JBDevTestTS.plist */,
+				189145AC2D8C08AA003D1AC8 /* JBDevTestTS.ent */,
 			);
 			path = JBDevTestTS;
 			sourceTree = "<group>";
@@ -319,6 +319,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = JBDevTestTS/JBDevTestTs.ent;
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = JBDevTestTS/Info.plist;
@@ -339,6 +340,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = JBDevTestTS/JBDevTestTs.ent;
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = JBDevTestTS/Info.plist;

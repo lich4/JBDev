@@ -1,5 +1,5 @@
 #!/bin/bash
-# version 1.0
+# version 1.1
 UTIL=$1
 TARGET_PATH=${CODESIGNING_FOLDER_PATH}
 TARGET_SRC_PATH=${PROJECT_DIR}/${TARGET_NAME}
@@ -8,6 +8,10 @@ if [ -z ${WRAPPER_EXTENSION} ]; then
     BIN_PATH=${TARGET_PATH}
 else
     BIN_PATH=${TARGET_BUILD_DIR}/${EXECUTABLE_PATH}
+fi
+
+if [ ! -d ${TARGET_SRC_PATH} ]; then
+    TARGET_SRC_PATH=${PROJECT_DIR}
 fi
 
 echo "TARGET_PATH: ${TARGET_PATH}"
@@ -32,10 +36,6 @@ function getType {
 }
 
 function checkEnv {
-    if [ ! -d ${TARGET_SRC_PATH} ]; then
-        echo "Could not find ${TARGET_SRC_PATH}, exit"
-        return -1;
-    fi
     if [ ${JBDEV_TYPE} = "jailbreak" ]; then
         if [ -z ${THEOS} ]; then
             echo "THEOS not set"
@@ -61,23 +61,27 @@ function logosCompile {
 }
 
 function doSign {
-    ENT_PATH=${TARGET_SRC_PATH}/${TARGET_NAME}.plist
+    ENT_PATH=${TARGET_SRC_PATH}/${TARGET_NAME}.ent
+    if [ ! -z ${CODE_SIGN_ENTITLEMENTS} ]; then
+        ENT_PATH=${CODE_SIGN_ENTITLEMENTS}
+    fi
     codesign --remove-signature ${TARGET_PATH}
-    if [ -e ${TARGET_PATH}/_CodeSignature ]; then
+    if [ -f ${TARGET_PATH}/_CodeSignature ]; then
         rm -rf ${TARGET_PATH}/_CodeSignature
     fi
-    if [ -e ${TARGET_PATH}/embedded.mobileprovision ]; then
+    if [ -f ${TARGET_PATH}/embedded.mobileprovision ]; then
         rm -rf ${TARGET_PATH}/embedded.mobileprovision
     fi
-    if [ -e ${ENT_PATH} ]; then
+    if [ -f ${ENT_PATH} ]; then
         echo "Find ${ENT_PATH}, Signing ..."
         if [ -f ${BIN_PATH} ]; then
             ldid -S${ENT_PATH} ${BIN_PATH}
         else
-            echo "Could not find ${BIN_PATH}, exit"
+            echo "Could not find binary ${BIN_PATH}, exit"
             return -1
         fi
     else
+        echo "Could not find entitlement ${ENT_PATH}"
         echo "ldid -S ${BIN_PATH}"
         ldid -S ${BIN_PATH}
     fi
@@ -95,7 +99,7 @@ function copyToLayout {
         rsync -az ${LAYOUT_TEMPLATE}/* layout/
     fi
     if [ ! -f layout/DEBIAN/control ]; then
-        echo "Could not find /layout/DEBIAN/control, exit"
+        echo "Could not find layout/DEBIAN/control, exit"
         return -1
     fi
     LAYOUT_TARGET_DIR=layout${INSTALL_PATH}
@@ -103,11 +107,11 @@ function copyToLayout {
         mkdir -p ${LAYOUT_TARGET_DIR}
     fi
     LAYOUT_TARGET_PATH=${LAYOUT_TARGET_DIR}/${FULL_PRODUCT_NAME}
-    if [ -e ${LAYOUT_TARGET_PATH} ]; then
+    if [ -f ${LAYOUT_TARGET_PATH} ]; then
         echo "Find old file, delete ${LAYOUT_TARGET_PATH}"
         rm -rf ${LAYOUT_TARGET_PATH}
     fi
-    rsync -az ${TARGET_PATH} ${LAYOUT_TARGET_DIR}/
+    rsync -az --exclude="payload.*" ${TARGET_PATH} ${LAYOUT_TARGET_DIR}/
 }
 
 function doPackage() {
@@ -150,7 +154,7 @@ function doPackage() {
     cp -f jbdev.plist ${TARGET_PATH}/ # 强制拷贝防止sparse.ipa不带文件
 }
 
-echo "........ Start building with theos ........"
+echo "........ Start building ........"
 getType || exit -1
 checkEnv || exit -1
 if [ x$UTIL = "xlogos" ]; then
@@ -164,5 +168,5 @@ fi
 if [ x${JBDEV_PACKAGE} = "xYES" ]; then
     doPackage || exit -1
 fi
-echo "........ Done building with theos ........"
+echo "........ Done building ........"
 

@@ -1,6 +1,10 @@
 #include "utils.h"
 #include <spawn.h>
 
+extern "C" {
+CFNotificationCenterRef CFNotificationCenterGetDistributedCenter();
+}
+
 void setIPCHandler(NSString* name, IPCHandler handler) {
     @autoreleasepool {
         static NSMutableDictionary* g_handlers = [NSMutableDictionary new];

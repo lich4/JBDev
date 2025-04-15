@@ -140,6 +140,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		182519E22DAE38FE008470CE /* JBDevTestDaemon.ent */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = JBDevTestDaemon.ent; sourceTree = "<group>"; };
+		182519E32DAE3910008470CE /* JBDevTestTool.ent */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = JBDevTestTool.ent; sourceTree = "<group>"; };
 		189144F62D8AFD89003D1AC8 /* JBDevTestApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = JBDevTestApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		189144F92D8AFD89003D1AC8 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		189144FA2D8AFD89003D1AC8 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -161,7 +163,7 @@
 		189145352D8B019A003D1AC8 /* layout */ = {isa = PBXFileReference; lastKnownFileType = folder; path = layout; sourceTree = "<group>"; };
 		189145362D8B01A1003D1AC8 /* jbdev.Makefile */ = {isa = PBXFileReference; lastKnownFileType = text; path = jbdev.Makefile; sourceTree = "<group>"; };
 		1891453C2D8B0B8C003D1AC8 /* jbdev.build.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = jbdev.build.sh; sourceTree = "<group>"; };
-		1891453D2D8B0EB6003D1AC8 /* JBDevTestApp.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = JBDevTestApp.plist; sourceTree = "<group>"; };
+		1891453D2D8B0EB6003D1AC8 /* JBDevTestApp.ent */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = JBDevTestApp.ent; sourceTree = "<group>"; };
 		189145712D8BB352003D1AC8 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		1891458F2D8BBA4B003D1AC8 /* jbdev.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = jbdev.plist; sourceTree = "<group>"; };
 		189145912D8BC089003D1AC8 /* layout_root */ = {isa = PBXFileReference; lastKnownFileType = folder; path = layout_root; sourceTree = "<group>"; };
@@ -323,7 +325,7 @@
 				189145072D8AFD8A003D1AC8 /* LaunchScreen.storyboard */,
 				1891450A2D8AFD8A003D1AC8 /* Info.plist */,
 				1891450B2D8AFD8A003D1AC8 /* main.m */,
-				1891453D2D8B0EB6003D1AC8 /* JBDevTestApp.plist */,
+				1891453D2D8B0EB6003D1AC8 /* JBDevTestApp.ent */,
 			);
 			path = JBDevTestApp;
 			sourceTree = "<group>";
@@ -341,6 +343,7 @@
 		189145242D8AFED0003D1AC8 /* JBDevTestDaemon */ = {
 			isa = PBXGroup;
 			children = (
+				182519E22DAE38FE008470CE /* JBDevTestDaemon.ent */,
 				189145252D8AFED0003D1AC8 /* main.m */,
 			);
 			path = JBDevTestDaemon;
@@ -349,6 +352,7 @@
 		1891452F2D8AFEE4003D1AC8 /* JBDevTestTool */ = {
 			isa = PBXGroup;
 			children = (
+				182519E32DAE3910008470CE /* JBDevTestTool.ent */,
 				189145302D8AFEE4003D1AC8 /* main.m */,
 			);
 			path = JBDevTestTool;
@@ -1205,6 +1209,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = JBDevTestApp/JBDevTestApp.ent;
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -1227,6 +1232,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = JBDevTestApp/JBDevTestApp.ent;
 				CODE_SIGN_STYLE = Automatic;
 				INFOPLIST_FILE = JBDevTestApp/Info.plist;
 				JBDEV_PACKAGE = YES;
@@ -1299,6 +1305,7 @@
 		189145282D8AFED0003D1AC8 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = JBDevTestDaemon/JBDevTestDaemon.ent;
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -1314,6 +1321,7 @@
 		189145292D8AFED0003D1AC8 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = JBDevTestDaemon/JBDevTestDaemon.ent;
 				CODE_SIGN_STYLE = Automatic;
 				INSTALL_PATH = /usr/bin;
 				MACOSX_DEPLOYMENT_TARGET = 11.3;
@@ -1325,6 +1333,7 @@
 		189145332D8AFEE4003D1AC8 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = JBDevTestTool/JBDevTestTool.ent;
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -1341,6 +1350,7 @@
 		189145342D8AFEE4003D1AC8 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = JBDevTestTool/JBDevTestTool.ent;
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PREPROCESSOR_DEFINITIONS = "";
 				INSTALL_PATH = /usr/bin;
@@ -1355,6 +1365,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = JBDevTestApp/JBDevTestApp.ent;
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -1380,6 +1391,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = JBDevTestApp/JBDevTestApp.ent;
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PREPROCESSOR_DEFINITIONS = THEOS_PACKAGE_SCHEME_ROOTLESS;
 				INFOPLIST_FILE = JBDevTestApp/Info.plist;
@@ -1461,6 +1473,7 @@
 		189D6B672D93C7D700AC50A7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = JBDevTestDaemon/JBDevTestDaemon.ent;
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -1479,6 +1492,7 @@
 		189D6B682D93C7D700AC50A7 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = JBDevTestDaemon/JBDevTestDaemon.ent;
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PREPROCESSOR_DEFINITIONS = THEOS_PACKAGE_SCHEME_ROOTLESS;
 				INSTALL_PATH = /usr/bin;
@@ -1493,6 +1507,7 @@
 		189D6B712D93C7DE00AC50A7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = JBDevTestTool/JBDevTestTool.ent;
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -1511,6 +1526,7 @@
 		189D6B722D93C7DE00AC50A7 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = JBDevTestTool/JBDevTestTool.ent;
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PREPROCESSOR_DEFINITIONS = THEOS_PACKAGE_SCHEME_ROOTLESS;
 				INSTALL_PATH = /usr/bin;
@@ -1527,6 +1543,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = JBDevTestApp/JBDevTestApp.ent;
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -1552,6 +1569,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = JBDevTestApp/JBDevTestApp.ent;
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PREPROCESSOR_DEFINITIONS = THEOS_PACKAGE_SCHEME_ROOTHIDE;
 				INFOPLIST_FILE = JBDevTestApp/Info.plist;
@@ -1633,6 +1651,7 @@
 		189D6B9A2D93C82B00AC50A7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = JBDevTestDaemon/JBDevTestDaemon.ent;
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -1651,6 +1670,7 @@
 		189D6B9B2D93C82B00AC50A7 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = JBDevTestDaemon/JBDevTestDaemon.ent;
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PREPROCESSOR_DEFINITIONS = THEOS_PACKAGE_SCHEME_ROOTHIDE;
 				INSTALL_PATH = /usr/bin;
@@ -1665,6 +1685,7 @@
 		189D6BA42D93C82F00AC50A7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = JBDevTestTool/JBDevTestTool.ent;
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -1683,6 +1704,7 @@
 		189D6BA52D93C82F00AC50A7 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = JBDevTestTool/JBDevTestTool.ent;
 				CODE_SIGN_STYLE = Automatic;
 				GCC_PREPROCESSOR_DEFINITIONS = THEOS_PACKAGE_SCHEME_ROOTHIDE;
 				INSTALL_PATH = /usr/bin;
