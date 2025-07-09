@@ -18,6 +18,7 @@ JBDev用于Xcode越狱开发及巨魔开发，提供和普通App一样的开发�
 * 支持越狱(有根/无根/隐根)App开发&源码级调试
 * 支持巨魔App开发&源码级调试
 * 支持Xcode调试任意进程
+* 无需开发者账号，无设备限制的使用Xcode开发App
 
 > 注意事项
 * JBDev只能用于越狱设备上调试
@@ -77,11 +78,11 @@ JBDev用于Xcode越狱开发及巨魔开发，提供和普通App一样的开发�
 * Build Settings - `Base SDK`设置为`iOS`，同时部署Device设置为iOS设备
 
 > 配置文件
-* 所有需要ldid签名的Target在自身目录下添加plist文件
 * 将`jbdev.build.sh`放在`.xcodeproj`同级目录
 * 将`jbdev.plist`放在`.xcodeproj`同级目录，设置`type`为`jailbreak`
 
 > 配置`Build Settings`
+* 所有需要ldid签名的Target设置`Code Signing Entitlements`路径
 * 所有Target调整`Installation Directory`
 * Project新增`CODE_SIGNING_ALLOWED`，设置为NO
 * Project新增`THEOS`，设置为theos路径
@@ -154,7 +155,7 @@ JBDev用于Xcode越狱开发及巨魔开发，提供和普通App一样的开发�
 * `SpringBoard`不属于App类型，不可以启动调试
 * 由于Xcode不支持非源码下断点，因此不支持调试logos语法的Tweak，如果谁有黑科技可以实现强制下断点请在issue里提交
 
-## JBDev开发巨魔项目
+## JBDev开发巨魔App
 
 详细实例见JBDevTSTest。前置条件：iOS系统需要能越狱且能使用巨魔
 
@@ -162,11 +163,11 @@ JBDev用于Xcode越狱开发及巨魔开发，提供和普通App一样的开发�
 * File - New - Target - iOS - App
 
 > 配置文件
-* 在自身Target目录下添加需要签名的plist文件
 * 将`jbdev.build.sh`放在`.xcodeproj`同级目录
 * 将`jbdev.plist`放在`.xcodeproj`同级目录，设置`type`为`trollstore`
 
 > 配置`Build Settings`
+* Target设置`Code Signing Entitlements`路径，用于ldid签名
 * Target新增`CODE_SIGNING_ALLOWED`，设置为NO
 * Target新增`JBDEV_PACKAGE`，设置为YES(此变量控制是否打包)
 
@@ -187,9 +188,11 @@ make clean; make package THEOS_PACKAGE_SCHEME=roothide
 
 ## 问题排查
 
-在使用JBDev遇到问题时，可以
-* 查看系统日志(前缀`JBDev`)
-* 查看文件日志`/tmp/jbdev.log`
+在使用JBDev遇到问题时，先判断问题在哪个环节再进行下一步处理：
+* 编译环节，说明代码本身有问题，与JBDev无关
+* 打包环节，须检查Xcode的jbdev.build.sh报错内容排查问题，可能是Mac环境问题如基础命令缺失
+* 安装环节，查看iOS系统日志(前缀`JBDev`)或文件日志`/tmp/jbdev.log`以定位错误，比如dpkg失败导致的Xcode安装失败，可手动安装deb排查具体失败原因
+* 调试环节，或USB未插拔或App本身有反调试
 
 其他注意事项
 * 对于iOS>=15，首次连接Mac必须使用XCode>=13，否则会因生成的符号缓存有误导致lldb初始化时间巨长，若已生成错误的符号缓存可以在此目录手动删除`~/Library/Developer/Xcode/iOS DeviceSupport/[设备]`
@@ -237,6 +240,15 @@ error: Sandbox: bash(27852) deny(1) file-read-data /path/to/jbdev.build.sh
 ```
 * 原因: Xcode15默认开启`User Script Sandboxing`
 * 解决: 在`Build Settings`中禁用`User Script Sandboxing`
+
+---
+
+Xcode编译错误
+```
+error: Multiple commands produce ...
+```
+* 原因: target名重复
+* 解决: 修改target名或使用`Legacy build system`
 
 ---
 
@@ -296,6 +308,7 @@ JBDev is a powerful tool for Jailbreak/TrollStore development with Xcode, provid
 * Jailbreak(rootful/rootless/roothide) development with source-level debugging with Xcode
 * TrollStore development with source-level debugging with Xcode
 * Debug any process with Xcode
+* Develop apps using Xcode with neither a developer account nor device needed
 
 > Notice
 * JBDev is used on jailbreak devices
@@ -508,6 +521,15 @@ error: Sandbox: bash(27852) deny(1) file-read-data /path/to/jbdev.build.sh
 ```
 * Reason: From Xcode15 `User Script Sandboxing` is enabled by default
 * Fix: Disable `User Script Sandboxing` in `Build Settings`
+
+---
+
+Xcode build error
+```
+error: Multiple commands produce ...
+```
+* Reason: duplicated target name
+* Fix: Rename target or use `Legacy build system` instead
 
 ---
 

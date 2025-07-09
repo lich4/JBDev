@@ -104,15 +104,24 @@ static BOOL (*old_LSApplicationWorkspace_installApplication_withOptions_error_us
 static BOOL new_LSApplicationWorkspace_installApplication_withOptions_error_usingBlock(
     Class cls, SEL sel, NSURL* bundleURL, NSDictionary* options, NSError** error, void(^block)(NSError* err)) {
     @autoreleasepool {
+        NSLog(@"%@ enter installApplication", log_prefix);
         if (![options[@"PackageType"] isEqualToString:@"Developer"]) {
-            return old_LSApplicationWorkspace_installApplication_withOptions_error_usingBlock(
+            BOOL ret = old_LSApplicationWorkspace_installApplication_withOptions_error_usingBlock(
                 cls, sel, bundleURL, options, error, block);
+            if (error != nil && *error != nil) {
+                NSLog(@"%@ installApplication %@", log_prefix, *error);
+            }
+            return ret;
         }
         NSString* bundlePath = bundleURL.path;
         NSDictionary* infoDic = getPkgInfo(bundlePath);
         if (!isJBDev(infoDic)) { // 放行给AppSync处理
-            return old_LSApplicationWorkspace_installApplication_withOptions_error_usingBlock(
+            BOOL ret = old_LSApplicationWorkspace_installApplication_withOptions_error_usingBlock(
                 cls, sel, bundleURL, options, error, block);
+            if (error != nil && *error != nil) {
+                NSLog(@"%@ installApplication %@", log_prefix, *error);
+            }
+            return ret;
         }
         int status = instPkg(bundlePath);
         if (status == 0) {
@@ -124,8 +133,12 @@ static BOOL new_LSApplicationWorkspace_installApplication_withOptions_error_usin
             NSLog(@"%@ installApplication suc", log_prefix);
             return YES;
         }
-        return old_LSApplicationWorkspace_installApplication_withOptions_error_usingBlock(
+        BOOL ret = old_LSApplicationWorkspace_installApplication_withOptions_error_usingBlock(
             cls, sel, bundleURL, options, error, block);
+        if (error != nil && *error != nil) {
+            NSLog(@"%@ installApplication %@", log_prefix, *error);
+        }
+        return ret;
     }
 }
 
@@ -136,15 +149,26 @@ static void new_IXAppInstallCoordinator_installApplication_consumeSource_options
     Class cls, SEL sel, NSURL* bundleURL, BOOL consumeSource, MIInstallOptions* options, void(^progressBlock)(NSError* err), 
     void(^completion)(NSString* bid, NSError* err)) {
     @autoreleasepool {
+        NSLog(@"%@ enter installApplication", log_prefix);
         if (!options.isDeveloperInstall) {
             return old_IXAppInstallCoordinator_installApplication_consumeSource_options_legacyProgressBlock_completion(
-                cls, sel, bundleURL, consumeSource, options, progressBlock, completion);
+                cls, sel, bundleURL, consumeSource, options, progressBlock, ^(NSString* bid, NSError* err) {
+                    if (err != nil) {
+                        NSLog(@"%@ installApplication %@", log_prefix, err);
+                    }
+                    completion(bid, err);
+                });
         }
         NSString* bundlePath = bundleURL.path;
         NSDictionary* infoDic = getPkgInfo(bundlePath);
         if (!isJBDev(infoDic)) { // 放行给AppSync处理
             return old_IXAppInstallCoordinator_installApplication_consumeSource_options_legacyProgressBlock_completion(
-                cls, sel, bundleURL, consumeSource, options, progressBlock, completion);
+                cls, sel, bundleURL, consumeSource, options, progressBlock, ^(NSString* bid, NSError* err) {
+                    if (err != nil) {
+                        NSLog(@"%@ installApplication %@", log_prefix, err);
+                    }
+                    completion(bid, err);
+                });
         }
         int status = instPkg(bundlePath);
         if (status == 0) {
@@ -157,7 +181,12 @@ static void new_IXAppInstallCoordinator_installApplication_consumeSource_options
             return completion(bid, nil);
         }
         return old_IXAppInstallCoordinator_installApplication_consumeSource_options_legacyProgressBlock_completion(
-            cls, sel, bundleURL, consumeSource, options, progressBlock, completion);
+            cls, sel, bundleURL, consumeSource, options, progressBlock, ^(NSString* bid, NSError* err) {
+                if (err != nil) {
+                    NSLog(@"%@ installApplication %@", log_prefix, err);
+                }
+                completion(bid, err);
+            });
     }
 }
 
@@ -195,6 +224,7 @@ class Ctor {
 public:
     Ctor() {
         if (0 == strcmp(__progname, "streaming_zip_conduit")) {
+            NSLog(@"%@ enter streaming_zip_conduit", log_prefix);
             Class IXAppInstallCoordinator = objc_getClass("IXAppInstallCoordinator");
             if (IXAppInstallCoordinator != nil) { // iOS16+
                 if ([IXAppInstallCoordinator respondsToSelector:@selector(installApplication:consumeSource:options:legacyProgressBlock:completion:)]) {
@@ -215,6 +245,7 @@ public:
                 }
             }
         } else if (0 == strcmp(__progname, "lockdownd")) {
+            NSLog(@"%@ enter lockdownd", log_prefix);
             void* SMJobSubmit = dlsym(RTLD_DEFAULT, "SMJobSubmit");
             MSHookFunction((void*)SMJobSubmit, (void*)new_SMJobSubmit, (void**)&old_SMJobSubmit);
         }

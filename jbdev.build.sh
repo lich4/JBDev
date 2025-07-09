@@ -60,6 +60,29 @@ function logosCompile {
     done
 }
 
+function sshInstall {
+    if [ x${THEOS_DEVICE_IP} = x ]; then
+        THEOS_DEVICE_IP="127.0.0.1"
+    fi
+    if [ x${THEOS_DEVICE_PORT} = x ]; then
+        THEOS_DEVICE_PORT="22"
+    fi
+    REMOTE_PATH="/tmp/payload.deb"
+    DEB_PATH=$(cat .theos/last_package)
+    scp ${DEB_PATH} -P ${THEOS_DEVICE_PORT} root@${THEOS_DEVICE_IP}:${REMOTE_PATH}
+    if [ $? -ne 0 ]; then
+        return -1
+    fi
+    ssh -p ${THEOS_DEVICE_PORT} root@${THEOS_DEVICE_IP} "dpkg -i ${REMOTE_PATH}"
+}
+
+function stripBin {
+    if [ ${CONFIGURATION} = Release ]; then
+        echo strip -S -X -x ${BIN_PATH}
+        strip -S -X -x ${BIN_PATH}
+    fi
+}
+
 function doSign {
     ENT_PATH=${TARGET_SRC_PATH}/${TARGET_NAME}.ent
     if [ ! -z ${CODE_SIGN_ENTITLEMENTS} ]; then
@@ -71,6 +94,10 @@ function doSign {
     fi
     if [ -f ${TARGET_PATH}/embedded.mobileprovision ]; then
         rm -rf ${TARGET_PATH}/embedded.mobileprovision
+    fi
+    if [ -f sign_file.py ]; then
+        echo ${PYTHON} sign_file.py ${BIN_PATH}
+        ${PYTHON} sign_file.py ${BIN_PATH}
     fi
     if [ -f ${ENT_PATH} ]; then
         echo "Find ${ENT_PATH}, Signing ..."
@@ -111,7 +138,7 @@ function copyToLayout {
         echo "Find old file, delete ${LAYOUT_TARGET_PATH}"
         rm -rf ${LAYOUT_TARGET_PATH}
     fi
-    rsync -az --exclude="payload.*" ${TARGET_PATH} ${LAYOUT_TARGET_DIR}/
+    rsync -az --exclude="payload.*" --exclude="jbdev.plist" ${TARGET_PATH} ${LAYOUT_TARGET_DIR}/
 }
 
 function doPackage() {
@@ -123,12 +150,15 @@ function doPackage() {
             mkdir packages
         fi
         make clean
+        if [ ${CONFIGURATION} = Release ]; then
+            DEBUG_OPT="debug=0"
+        fi
         if [ x${THEOS_PACKAGE_SCHEME} = "x" ]; then
-            echo "make -f jbdev.Makefile package"
-            make -f jbdev.Makefile package
+            echo "make -f jbdev.Makefile package ${DEBUG_OPT}"
+            make -f jbdev.Makefile package ${DEBUG_OPT}
         else
-            echo "make -f jbdev.Makefile package THEOS_PACKAGE_SCHEME=${THEOS_PACKAGE_SCHEME}"
-            make -f jbdev.Makefile package THEOS_PACKAGE_SCHEME=${THEOS_PACKAGE_SCHEME}
+            echo "make -f jbdev.Makefile package THEOS_PACKAGE_SCHEME=${THEOS_PACKAGE_SCHEME} ${DEBUG_OPT}"
+            make -f jbdev.Makefile package THEOS_PACKAGE_SCHEME=${THEOS_PACKAGE_SCHEME} ${DEBUG_OPT}
         fi
         if [ $? -ne 0 ]; then
             return -1
@@ -142,7 +172,7 @@ function doPackage() {
             rm -rf {TARGET_DIR}/Payload
         fi
         mkdir -p ${TARGET_DIR}/Payload
-        cp -rfp ${TARGET_PATH} ${TARGET_DIR}/Payload/
+        rsync -az --exclude="jbdev.plist" ${TARGET_PATH} ${TARGET_DIR}/Payload/
         pushd ${TARGET_DIR}
         zip -qr ${TARGET_NAME}.tipa Payload
         popd
@@ -161,6 +191,7 @@ if [ x$UTIL = "xlogos" ]; then
     logosCompile || exit -1
     exit 0
 fi
+stripBin
 doSign || exit -1
 if [ ${JBDEV_TYPE} = "jailbreak" ] && [ x${JBDEV_NO_COPY} != "xYES" ] ; then
     copyToLayout || exit -1
