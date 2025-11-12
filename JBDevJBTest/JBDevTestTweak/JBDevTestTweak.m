@@ -6,7 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#include <CydiaSubstrate/CydiaSubstrate.h>
+#include "CydiaSubstrate.h"
 
 #if defined(THEOS_PACKAGE_SCHEME_ROOTLESS)
 #include <rootless.h>

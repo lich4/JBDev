@@ -116,9 +116,7 @@ function copyToLayout {
 
 function doPackage() {
     if [ ${JBDEV_TYPE} = "jailbreak" ]; then
-        if [ ! -f jbdev.Makefile ]; then
-            echo "include ${THEOS}/makefiles/common.mk" > jbdev.Makefile
-        fi
+        echo "include ${THEOS}/makefiles/common.mk" > jbdev.Makefile
         if [ ! -d packages ]; then
             mkdir packages
         fi

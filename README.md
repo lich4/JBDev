@@ -7,7 +7,7 @@
 ## 简介
 
 JBDev用于Xcode越狱开发及巨魔开发，提供和普通App一样的开发体验，使用Xcode进行编译——安装——调试，已测试环境：
-* Xcode12-15
+* Xcode12-16
 * iOS12-16
 * arm64/arm64e
 * Checkra1n/Unc0ver/Taurine/Palera1n/Dopamine
@@ -200,6 +200,16 @@ make clean; make package THEOS_PACKAGE_SCHEME=roothide
 ------
 
 ```
+jbdev.build.sh: line 78: ldid: command not found
+```
+
+* 原因：ldid不在`$PATH`目录下
+* 解决：若已安装ldid则链接到`$PATH`目录下，如`ln -s /path/to/ldid /usr/local/bin/ldid`
+* 注意：类似的方式处理`lzma`
+
+------
+
+```
 A system application with the given bundle identifier is already installed on the device and cannot be replaced.
 ```
 * 原因：安装成功但获取App信息失败(如`extrainst_`未执行`uicache`)
@@ -297,7 +307,7 @@ Xcode一直安装不停止
 ## Introduction
 
 JBDev is a powerful tool for Jailbreak/TrollStore development with Xcode, providing the same experience as common app development: compile - install - debug app with Xcode, tested on
-* Xcode12-15
+* Xcode12-16
 * iOS12-16
 * arm64/arm64e
 * Checkra1n/Unc0ver/Taurine/Palera1n/Dopamine
@@ -310,7 +320,7 @@ JBDev is a powerful tool for Jailbreak/TrollStore development with Xcode, provid
 * Debug any process with Xcode
 * Develop apps using Xcode with neither a developer account nor device needed
 
-> Notice
+> Note
 * JBDev is used on jailbreak devices
 * For Jailbreak development, JBDev use Theos to package 
 * For TrollStore development, make sure TrollStore is installed
@@ -396,7 +406,7 @@ See JBDevJBTest for details
 * `layout*/DEBIAN/{preinst,postinst,extrainst_,prerm,postrm}`
 * `layout*/Library/LaunchDaemons/*.plist`
 
-> Notice
+> Note
 * The value of `Architecture` in `layout/DEBIAN/control` has nothing to do with `Architecture` in `Xcode Build Settings`, available arch for rootful is `armv7/arm64/arm64e`, and `arm64/arm64e` for rootless/roothide
 * There must be `uicache` in `postinst/extrainst_` file in `layout/DEBIAN`, or installing from Xcode will fail for system app not installed
 
@@ -438,7 +448,7 @@ See JBDevTweakTest for details. JBDev can used to debug any app, as well as debu
 > Configure `Build Phase`
 * Add `Run Script` to all targets as the last phase，and set the content to `bash jbdev.build.sh`
 
-> Notice
+> Note
 * `SpringBoard` is not of app type, and cannot be debugged in this way
 * Logos is not supported by JBDev, since Xcode do not support breakpoints in non-source files.
 
@@ -461,7 +471,7 @@ See JBDevTSTest for details
 > Configure `Build Phase`
 * Add `Run Script` to the target as the last phase，and set the content to `bash jbdev.build.sh`
 
-> Notice
+> Note
 * Due to the huge difference between Jailbreak and pure TrollStore environment, Further testing on pure TrollStore is required
 
 ## Compile JBDev
@@ -478,6 +488,16 @@ make clean; make package THEOS_PACKAGE_SCHEME=roothide
 Any problems with JBDev
 * View iOS system log(prefix `JBDev`)
 * View iOS file log in `/tmp/jbdev.log`
+
+------
+
+```
+jbdev.build.sh: line 78: ldid: command not found
+```
+
+* Reason: There is no `ldid` in `$PATH`
+* Fix: if `ldid` is already installed, link it to `$PATH` as `ln -s /path/to/ldid /usr/local/bin/ldid`
+* Note: handle `lzma` errors in similar way
 
 ------
 
