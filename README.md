@@ -1,8 +1,300 @@
-* [For English](#Introduction)
+# [For Chinese](#简介)
 
 ![](https://raw.githubusercontent.com/lich4/JBDev/main/screenshots/launch_debug_sysapp.png)  
 
 ![](https://raw.githubusercontent.com/lich4/JBDev/main/screenshots/launch_debug_tweak.png)  
+
+## Introduction
+
+JBDev is designed for jailbreak development and TrollStore development in Xcode. It provides the same development experience as a normal app: build → install → debug in Xcode. Tested environments:
+* Xcode 12-16
+* iOS 12-16
+* arm64/arm64e
+* Checkra1n/Unc0ver/Taurine/Palera1n/Dopamine
+* Rootful/Rootless/Roothide jailbreak
+
+### Key Features
+
+* Supports Jailbreak(Rootful/Rootless/Roothide) development & source-level debugging with Xcode
+* Supports TrollStore development & source-level debugging with Xcode
+* Supports using Xcode to debug any process on iOS
+* No developer account required; use Xcode to develop apps with no device limits
+
+> Notes
+* JBDev can only be used for debugging on jailbroken devices
+* When using JBDev for jailbreak development, the packaging feature depends on Theos 
+* When using JBDev for TrollStore development, make sure TrollStore is installed
+
+> Debugging methods overview for common project types
+
+|Project Type         |Xcode Debugging   |Debugging type           |
+|---------------------|------------------|-------------------------|
+|Jailbreak App        |JBDev             |Launch/Attach/Wait Debug |
+|Jailbreak Tweak/Tool |JBDev             |Launch/Wait        Debug |
+|TrollStore App       |JBDev             |Launch/Attach/Wait Debug |
+|Non-jailbreak App    |MonkeyDev         |Launch/Attach/Wait Debug |
+
+Notes:
+* Launch debug: launch the app via Xcode and make it wait for the debugger to attach
+* Attach debug: attach when the process is already running; LLDB usage: debugserver --attach=[pid|name] (same as Xcode)
+* Wait debug: wait for the process to start and auto-attach; LLDB usage: debugserver -waitfor=[name] (same as Xcode)
+
+### Testing & Usage
+
+* Get ready with a jailbreak iDevice
+* Install appsync(optional); Download and install `jbdev.deb` from `https://github.com/lich4/JBDev/releases`
+* Install Theos on macOS, `https://github.com/roothide/Developer`
+* Test the demo `JBDevJBTest` with `THEOS` setting to your install path of Theos
+* After getting familiar with the basic usage of JBDev, try setting up a whole new project as described in Readme, and build your own project with JBDev
+* Enjoy
+
+### JBDev core
+
+> Core files
+* `jbdev.plist`, Control the behaviour of JBDev on iOS. It must be packaged together with app(target type) during development stage, fields:
+* * `type`, Specify packaging type, can be `app/jailbreak/trollstore`
+* `jbdev.build.sh`, script that controls JBDev packaging
+
+> Core settings (environment variables)
+* `THEOS`, Specify the installing path of Theos
+* `JBDEV_PACKAGE`, Control packaging, for app type target only
+
+## Jailbreak development demo
+
+See JBDevJBTest for details
+
+### Create a Project
+
+The following setup does not depend on iOSOpenDev/MonkeyDev.
+
+> Use Xcode to create a project equivalent to `theos/application`
+* File - New - Target - iOS - App
+* This is the main target, used for JBDev packaging/install/debug
+
+> Use Xcode to create a project equivalent to `theos/tweak`
+* File - New - Target - macOS - Library
+* Build Settings - set `Base SDK` to `iOS`，and set the deployment target to your iOS device
+
+> Use Xcode to create a project equivalent to `theos/tool`
+* File - New - Target - macOS - CommandLineTool
+* Build Settings - set `Base SDK` to `iOS`，and set the deployment target to your iOS device
+
+> Configuration files
+* Put `jbdev.build.sh` in the same directory as `.xcodeproj`
+* Put `jbdev.plist` in the same directory as `.xcodeproj`, and set `type` to `jailbreak`
+
+> Configure `Build Settings`
+* For all targets that require ldid signing, set the `Code Signing Entitlements` path
+* Set `Installation Directory` for all targets
+* Add `CODE_SIGNING_ALLOWED` to project and set to NO
+* Add `THEOS` to project according to the path of your theos
+* Add `JBDEV_PACKAGE` to the main target and set to YES
+
+> Configure `Build Phase`
+* For all targets, add a final `Run Script` phase: `bash jbdev.build.sh`
+* Set other targets as dependencies of the main target
+
+### Rootless/Roothide jailbreak configuration
+
+> JBDev support Rootful/Rootless/Roothide well as follows
+* `layout_root` directory，stores the diffs from Rootful to Rootless/Roothide
+* `layout_rootless` directory，stores the diffs from Rootless to Rootful/Roothide
+* `layout_roothide` directory，stores the diffs from Roothide to Rootful/Rootless
+
+> Commonly used diffs
+* `layout*/DEBIAN/control`，
+* * `Architecture` is `iphoneos-arm` for Rootful jailbreak
+* * `Architecture` is `iphoneos-arm64` for Rootless jailbreak
+* * `Architecture` is `iphoneos-arm64e` for Roothide jailbreak
+* `layout*/DEBIAN/{preinst,postinst,extrainst_,prerm,postrm}`
+* `layout*/Library/LaunchDaemons/*.plist`
+
+> Notes
+* The value of `Architecture` in `layout/DEBIAN/control` is unrelated to the `Architecture` in `Xcode Build Settings`, available arch for Rootful is `armv7/arm64/arm64e`, and `arm64/arm64e` for Rootless/Roothide jailbreak
+* There must be `uicache` in `postinst/extrainst_` file in `layout/DEBIAN`, or installing from Xcode will fail for system app not installed
+
+#### Switching between Rootful/Rootless/Roothide Jailbreak
+
+> general
+* For tweak target, set `Runpath Search Paths` `Header Search Paths` `Framework Search Paths`
+* For tweak target, link `libsubstrate.tbd`
+> Rootful jailbreak
+* For all targets, remove `THEOS_PACKAGE_SCHEME` from `Build Settings`
+> Rootless jailbreak
+* For all targets, set `THEOS_PACKAGE_SCHEME` in `Build Settings` to `rootless`
+* Set `THEOS_PACKAGE_SCHEME_ROOTLESS` in `Preprocessor Macros`
+> Roothide jailbreak
+* For all targets, set `THEOS_PACKAGE_SCHEME` in `Build Settings` to `roothide`
+* Set `Preprocessor Macros` in `THEOS_PACKAGE_SCHEME_ROOTHIDE`
+* For tweak target, link `libroothide.tbd`
+
+## Debugging the tweak alone
+
+See JBDevTweakTest for details. JBDev can debug any app, as well as debug the tweak injected to app at source-level, The idea:
+* Setup an empty app target with the same BundleID as the target App(`FakeApp`)
+* Perform packaging & installing & debugging with Xcode, and JBDev will skip installing `FakeApp`
+* Start debugging after target app spawned
+
+> Set up `FakeApp`
+* File - New - Target - iOS - App
+
+> Prepare files
+* Add entitlement plist files to the target sourcecode directory for each target
+* Put `jbdev.build.sh` to the same directory level of `.xcodeproj`
+* Put`jbdev.plist` to the same directory level of `.xcodeproj`, and set `type` to `jailbreak`
+
+> Configure `Build Settings`
+* Add `CODE_SIGNING_ALLOWED` to project and set to NO
+* Add `JBDEV_PACKAGE` to the target and set to YES
+* Add `JBDEV_NO_COPY` to `FakeApp` to prevent JBDev from installing itself
+
+> Configure `Build Phase`
+* Add `Run Script` to all targets as the last phase，and set the content to `bash jbdev.build.sh`
+
+> Notes
+* `SpringBoard` is not an app-type target and cannot be launch-debugged
+* Because Xcode does not support breakpoints outside source files, debugging tweaks written in Logos syntax is not supported. If anyone has a workaround to force breakpoints, please submit it in the issues
+
+## TrollStore development demo
+
+See JBDevTSTest for details. Prerequisites: iOS must be jailbreaked and able to use TrollStore.
+
+> Set up an iOS App project
+* File - New - Target - iOS - App
+
+> Prepare files
+* Add entitlement plist files to the target sourcecode directory for each target
+* Put `jbdev.build.sh` to the same directory level of `.xcodeproj`
+* Put`jbdev.plist` to the same directory level of `.xcodeproj`, and set `type` to `trollstore`
+
+> Configure `Build Settings`
+* Add `CODE_SIGNING_ALLOWED` to project and set to NO
+* Add `JBDEV_PACKAGE` to the target and set to YES
+
+> Configure `Build Phase`
+* Add `Run Script` to the target as the last phase，and set the content to `bash jbdev.build.sh`
+
+> Notes
+* For TrollStore app development, because a “pure TrollStore” environment differs significantly from a jailbreak environment, you should further test in a pure TrollStore environment later.
+
+## Compile JBDev
+
+```bash
+cd JBDev
+make clean; make package
+make clean; make package THEOS_PACKAGE_SCHEME=rootless
+make clean; make package THEOS_PACKAGE_SCHEME=roothide
+```
+
+## Troubleshooting
+
+When you encounter issues while using JBDev, first identify which stage the problem occurs in before proceeding:
+* Compilation stage: indicates an issue with the code itself and is unrelated to JBDev
+* Packaging stage: check the error output from Xcode’s `jbdev.build.sh`; it may be a macOS environment issue such as missing basic commands
+* Installation stage: check iOS system logs (prefix `JBDev`) or the file log `/tmp/jbdev.log` to locate the error. For example, if dpkg fails and causes the Xcode install step to fail, you can manually install the deb to pinpoint the specific cause.
+* Debugging stage: the USB cable may need to be replugged, or the app may have anti-debugging protections
+
+Other notes:
+* For iOS >= 15, the first time connecting to a Mac you must use Xcode >= 13. Otherwise, the generated symbol cache may be incorrect, causing extremely long LLDB initialization times. If an incorrect symbol cache has already been generated, you can manually delete it under: `~/Library/Developer/Xcode/iOS DeviceSupport/[device]`
+
+------
+
+```
+jbdev.build.sh: line 78: ldid: command not found
+```
+
+* Cause: There is no `ldid` in `$PATH`
+* Fix: if `ldid` is already installed, link it to `$PATH` as `ln -s /path/to/ldid /usr/local/bin/ldid`
+* Note: handle `lzma` errors in similar way
+
+------
+
+```
+A system application with the given bundle identifier is already installed on the device and cannot be replaced.
+```
+* Cause: `uicache` is not specified in `extrainst_/postinst`
+* Fix: Reinstall and uninstall deb package manually, or run `uicache` after deleting app directory manully
+
+---
+
+```
+Failed to start remote service "com.apple.debugserver" on device.
+```
+* Fix: Replug the usb cable
+
+---
+
+```
+dyld[15323]: terminating because inserted dylib '/Developer/usr/lib/libBacktraceRecording.dylib' could not be loaded: tried: '/usr/lib/system/introspection/libBacktraceRecording.dylib' (no such file, not in dyld cache), '/Developer/usr/lib/libBacktraceRecording.dylib' (no such file), '/private/preboot/Cryptexes/OS/Developer/usr/lib/libBacktraceRecording.dylib' (no such file), '/Developer/usr/lib/libBacktraceRecording.dylib' (no such file)
+```
+* Cause: Debugging iOS>=16 with Xcode<=13 mistakenly
+* Fix: Use Xcode>=14 instead, or adjust options in `Product - Edit Scheme - Run - Options/Diagnostics`
+
+---
+
+```
+dpkg: error processing archive /var/mobile/Media/PublicStaging/JBDevTestApp.app/payload.deb (--install):
+ package architecture (iphoneos-arm) does not match system (iphoneos-arm64)
+Errors were encountered while processing:
+ /var/mobile/Media/PublicStaging/JBDevTestApp.app/payload.deb
+```
+* Cause: The deb package does not match Rootful/Rootless/Roothide jailbreak
+* Fix: Use the corresponding Xcode settings to compile deb for Rootful/Rootless/Roothide jailbreak
+
+---
+
+Xcode build error
+```
+error: Sandbox: bash(27852) deny(1) file-read-data /path/to/jbdev.build.sh
+```
+* Cause: From Xcode15 `User Script Sandboxing` is enabled by default
+* Fix: Disable `User Script Sandboxing` in `Build Settings`
+
+---
+
+Xcode build error
+```
+error: Multiple commands produce ...
+```
+* Cause: duplicated target name
+* Fix: Rename target or use `Legacy build system` instead
+
+---
+
+Xcode installation never finishes
+* Fix: kill iOS process `streaming_zip_conduit/installd`
+
+---
+
+Remove app sandbox directory failed with `rm` in Rootless/Roothide/trollstore environment:
+* Fix: resign `rm` with following entitlement
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>platform-application</key>
+	<true/>
+	<key>com.apple.private.MobileContainerManager.allowed</key>
+	<true/>
+	<key>com.apple.private.security.no-container</key>
+	<true/>
+	<key>com.apple.private.security.storage.AppBundles</key>
+	<true/>
+	<key>com.apple.private.security.storage.AppDataContainers</key>
+	<true/>
+	<key>com.apple.private.skip-library-validation</key>
+	<true/>
+	<key>com.apple.security.exception.files.absolute-path.read-write</key>
+	<string>/var/</string>
+	<key>task_for_pid-allow</key>
+	<true/>
+</dict>
+</plist>
+```
+
+# 中文文档
 
 ## 简介
 
@@ -190,7 +482,7 @@ make clean; make package THEOS_PACKAGE_SCHEME=roothide
 
 在使用JBDev遇到问题时，先判断问题在哪个环节再进行下一步处理：
 * 编译环节，说明代码本身有问题，与JBDev无关
-* 打包环节，须检查Xcode的jbdev.build.sh报错内容排查问题，可能是Mac环境问题如基础命令缺失
+* 打包环节，须检查Xcode的`jbdev.build.sh`报错内容排查问题，可能是Mac环境问题如基础命令缺失
 * 安装环节，查看iOS系统日志(前缀`JBDev`)或文件日志`/tmp/jbdev.log`以定位错误，比如dpkg失败导致的Xcode安装失败，可手动安装deb排查具体失败原因
 * 调试环节，或USB未插拔或App本身有反调试
 
@@ -269,297 +561,6 @@ Xcode一直安装不停止
 
 在无根/隐根/巨魔下用`rm`命令无法删除沙盒目录
 * 解决: 重签名`rm`
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-	<key>platform-application</key>
-	<true/>
-	<key>com.apple.private.MobileContainerManager.allowed</key>
-	<true/>
-	<key>com.apple.private.security.no-container</key>
-	<true/>
-	<key>com.apple.private.security.storage.AppBundles</key>
-	<true/>
-	<key>com.apple.private.security.storage.AppDataContainers</key>
-	<true/>
-	<key>com.apple.private.skip-library-validation</key>
-	<true/>
-	<key>com.apple.security.exception.files.absolute-path.read-write</key>
-	<string>/var/</string>
-	<key>task_for_pid-allow</key>
-	<true/>
-</dict>
-</plist>
-```
-
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-&nbsp;  
-
-## Introduction
-
-JBDev is a powerful tool for Jailbreak/TrollStore development with Xcode, providing the same experience as common app development: compile - install - debug app with Xcode, tested on
-* Xcode12-16
-* iOS12-16
-* arm64/arm64e
-* Checkra1n/Unc0ver/Taurine/Palera1n/Dopamine
-* rootful/rootless/roothide
-
-### Features
-
-* Jailbreak(rootful/rootless/roothide) development with source-level debugging with Xcode
-* TrollStore development with source-level debugging with Xcode
-* Debug any process with Xcode
-* Develop apps using Xcode with neither a developer account nor device needed
-
-> Note
-* JBDev is used on jailbreak devices
-* For Jailbreak development, JBDev use Theos to package 
-* For TrollStore development, make sure TrollStore is installed
-
-> Debugging methods with Xcode overview
-
-|Project Type  |Xcode Debugging   |Debugging type       |
-|--------------|------------------|---------------------|
-|JB App        |JBDev             |Spawn/Attach/Wait  |
-|JB Tweak/Tool |JBDev             |Spawn/Wait         |
-|TrollStore    |JBDev             |Spawn/Attach/Wait  |
-|NonJB App     |MonkeyDev         |Spawn/Attach/Wait  |
-
-* Spawn: Spawn the app and force it to wait debugger
-* Attach: Attach to the process already started. `debugserver --attach=[pid|name]` for lldb
-* Wait: Wait the process to start and attach to it later automatically. `debugserver -waitfor=[name]` for lldb
-
-### Test&Usage
-
-* Get ready with a jailbreak iDevice
-* Install appsync(optional); Download and install `jbdev.deb` from `https://github.com/lich4/JBDev/releases`
-* Install Theos on macOS, `https://github.com/roothide/Developer`
-* Test the demo `JBDevJBTest` with `THEOS` setting to the install path of Theos
-* After getting familiar with the basic usage of JBDev, try setting up a whole new project as described in Readme, and build your own project with JBDev
-* Enjoy
-
-### JBDev core
-
-> JBDev core files
-* `jbdev.plist`, Control the behaviour of JBDev on iOS. need to be packaged together with app(target type) during development phase, containing following fields
-* * `type`, Specify packaging type, the value can be one of `app/jailbreak/trollstore`
-* `jbdev.build.sh`, Control the behaviour of packaging of Xcode
-
-> JBDev core env
-* `THEOS`, Specify the installing path of Theos
-* `JBDEV_PACKAGE`, Control packaging, for app type target only
-
-## Jailbreak development demo
-
-See JBDevJBTest for details
-
-### Set up a project
-
-> Set up a project identical to `theos/application` 
-* File - New - Target - iOS - App
-* This is the main target
-
-> Set up a project identical to `theos/tweak`
-* File - New - Target - macOS - Library
-* Build Settings - set `Base SDK` to `iOS`，and set the deployment target to your iOS device
-
-> Set up a project identical to `theos/tool`
-* File - New - Target - macOS - CommandLineTool
-* Build Settings - set `Base SDK` to `iOS`，and set the deployment target to your iOS device
-
-> Prepare files
-* Add entitlement plist files to the target sourcecode directory for each target
-* Put `jbdev.build.sh` to the same directory level of `.xcodeproj`
-* Put`jbdev.plist` to the same directory level of `.xcodeproj`, and set `type` to `jailbreak`
-
-> Configure `Build Settings`
-* Set `Installation Directory` for all targets
-* Add `CODE_SIGNING_ALLOWED` to project and set to NO
-* Add `THEOS` to project according to the path of your theos
-* Add `JBDEV_PACKAGE` to the main target and set to YES
-
-> Configure `Build Phase`
-* Add `Run Script` to all target as the last phase，and set the content to `bash jbdev.build.sh`
-* Add all other targets to the main target as dependency
-
-### rootless/roothide configuration
-
-> JBDev support rootful/rootless/roothide well as follows
-* `layout_root` directory，stores the diffs from rootful to rootless/roothide  
-* `layout_rootless` directory，stores the diffs from rootless to rootful/roothide  
-* `layout_roothide` directory，stores the diffs from roothide to rootful/rootless
-
-> Commonly used diffs
-* `layout*/DEBIAN/control`，
-* * `Architecture` is `iphoneos-arm` for rootful
-* * `Architecture` is `iphoneos-arm64` for rootless
-* * `Architecture` is `iphoneos-arm64e` for roothide
-* `layout*/DEBIAN/{preinst,postinst,extrainst_,prerm,postrm}`
-* `layout*/Library/LaunchDaemons/*.plist`
-
-> Note
-* The value of `Architecture` in `layout/DEBIAN/control` has nothing to do with `Architecture` in `Xcode Build Settings`, available arch for rootful is `armv7/arm64/arm64e`, and `arm64/arm64e` for rootless/roothide
-* There must be `uicache` in `postinst/extrainst_` file in `layout/DEBIAN`, or installing from Xcode will fail for system app not installed
-
-#### Switch between rootful/rootless/roothide
-
-> general
-* For tweak target, set `Runpath Search Paths` `Header Search Paths` `Framework Search Paths`
-* For tweak target, link `libsubstrate.tbd`
-> rootful
-* For all targets, remove `THEOS_PACKAGE_SCHEME` from `Build Settings`
-> rootless
-* For all targets, set `THEOS_PACKAGE_SCHEME` in `Build Settings` to `rootless`
-* Set `THEOS_PACKAGE_SCHEME_ROOTLESS` in `Preprocessor Macros`
-> roothide
-* For all targets, set `THEOS_PACKAGE_SCHEME` in `Build Settings` to `roothide`
-* Set `Preprocessor Macros` in `THEOS_PACKAGE_SCHEME_ROOTHIDE`
-* For tweak target, link `libroothide.tbd`
-
-## Debugging the tweak alone
-
-See JBDevTweakTest for details. JBDev can used to debug any app, as well as debug the tweak injected to app from source-level, the process is as follows:
-* Setup an empty app target with the same BundleID as the target App(`FakeApp`)
-* Perform packaging & installing & debugging with Xcode, and JBDev will skip installing `FakeApp`
-* Start debugging after target app spawned
-
-> Set up `FakeApp`
-* File - New - Target - iOS - App
-
-> Prepare files
-* Add entitlement plist files to the target sourcecode directory for each target
-* Put `jbdev.build.sh` to the same directory level of `.xcodeproj`
-* Put`jbdev.plist` to the same directory level of `.xcodeproj`, and set `type` to `jailbreak`
-
-> Configure `Build Settings`
-* Add `CODE_SIGNING_ALLOWED` to project and set to NO
-* Add `JBDEV_PACKAGE` to the target and set to YES
-* Add `JBDEV_NO_COPY` to `FakeApp` to prevent JBDev from installing itself
-
-> Configure `Build Phase`
-* Add `Run Script` to all targets as the last phase，and set the content to `bash jbdev.build.sh`
-
-> Note
-* `SpringBoard` is not of app type, and cannot be debugged in this way
-* Logos is not supported by JBDev, since Xcode do not support breakpoints in non-source files.
-
-## TrollStore development demo
-
-See JBDevTSTest for details
-
-> Set up an iOS App project
-* File - New - Target - iOS - App
-
-> Prepare files
-* Add entitlement plist files to the target sourcecode directory for each target
-* Put `jbdev.build.sh` to the same directory level of `.xcodeproj`
-* Put`jbdev.plist` to the same directory level of `.xcodeproj`, and set `type` to `trollstore`
-
-> Configure `Build Settings`
-* Add `CODE_SIGNING_ALLOWED` to project and set to NO
-* Add `JBDEV_PACKAGE` to the target and set to YES
-
-> Configure `Build Phase`
-* Add `Run Script` to the target as the last phase，and set the content to `bash jbdev.build.sh`
-
-> Note
-* Due to the huge difference between Jailbreak and pure TrollStore environment, Further testing on pure TrollStore is required
-
-## Compile JBDev
-
-```bash
-cd JBDev
-make clean; make package
-make clean; make package THEOS_PACKAGE_SCHEME=rootless
-make clean; make package THEOS_PACKAGE_SCHEME=roothide
-```
-
-## Troubleshooting
-
-Any problems with JBDev
-* View iOS system log(prefix `JBDev`)
-* View iOS file log in `/tmp/jbdev.log`
-
-------
-
-```
-jbdev.build.sh: line 78: ldid: command not found
-```
-
-* Reason: There is no `ldid` in `$PATH`
-* Fix: if `ldid` is already installed, link it to `$PATH` as `ln -s /path/to/ldid /usr/local/bin/ldid`
-* Note: handle `lzma` errors in similar way
-
-------
-
-```
-A system application with the given bundle identifier is already installed on the device and cannot be replaced.
-```
-* Reason: `uicache` is not specified in `extrainst_/postinst`
-* Fix: Reinstall and uninstall deb package manually, or run `uicache` after deleting app directory manully
-
----
-
-```
-Failed to start remote service "com.apple.debugserver" on device.
-```
-* Fix: Replug the usb cable
-
----
-
-```
-dyld[15323]: terminating because inserted dylib '/Developer/usr/lib/libBacktraceRecording.dylib' could not be loaded: tried: '/usr/lib/system/introspection/libBacktraceRecording.dylib' (no such file, not in dyld cache), '/Developer/usr/lib/libBacktraceRecording.dylib' (no such file), '/private/preboot/Cryptexes/OS/Developer/usr/lib/libBacktraceRecording.dylib' (no such file), '/Developer/usr/lib/libBacktraceRecording.dylib' (no such file)
-```
-* Reason: Debugging iOS>=16 with Xcode<=13 mistakenly
-* Fix: Use Xcode>=14 instead, or adjust options in `Product - Edit Scheme - Run - Options/Diagnostics`
-
----
-
-```
-dpkg: error processing archive /var/mobile/Media/PublicStaging/JBDevTestApp.app/payload.deb (--install):
- package architecture (iphoneos-arm) does not match system (iphoneos-arm64)
-Errors were encountered while processing:
- /var/mobile/Media/PublicStaging/JBDevTestApp.app/payload.deb
-```
-* Reason: The deb package does not match rootful/rootless/roothide jailbreak
-* Fix: Use the corresponding Xcode settings to compile deb for rootful/rootless/roothide jailbreak
-
----
-
-Xcode build error
-```
-error: Sandbox: bash(27852) deny(1) file-read-data /path/to/jbdev.build.sh
-```
-* Reason: From Xcode15 `User Script Sandboxing` is enabled by default
-* Fix: Disable `User Script Sandboxing` in `Build Settings`
-
----
-
-Xcode build error
-```
-error: Multiple commands produce ...
-```
-* Reason: duplicated target name
-* Fix: Rename target or use `Legacy build system` instead
-
----
-
-Xcode never stop installing
-* Fix: kill iOS process `streaming_zip_conduit/installd`
-
----
-
-Remove app sandbox directory failed with `rm` in rootless/roothide/trollstore environment:
-* Fix: resign `rm` with following entitlement
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
