@@ -4,6 +4,8 @@
 
 ![](https://raw.githubusercontent.com/lich4/JBDev/main/screenshots/launch_debug_tweak.png)  
 
+![](https://raw.githubusercontent.com/lich4/JBDev/main/screenshots/wait_debug.mp4)  
+
 ## Introduction
 
 JBDev is designed for jailbreak development and TrollStore development in Xcode. It provides the same development experience as a normal app: build → install → debug in Xcode. Tested environments:
