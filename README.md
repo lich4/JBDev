@@ -4,7 +4,9 @@
 
 ![](https://raw.githubusercontent.com/lich4/JBDev/main/screenshots/launch_debug_tweak.png)  
 
-![](https://raw.githubusercontent.com/lich4/JBDev/main/screenshots/wait_debug.mp4)  
+<video src="https://raw.githubusercontent.com/lich4/JBDev/main/screenshots/wait_debug.mp4" width="100%" controls>
+  你的浏览器不支持视频标签。
+</video>
 
 ## Introduction
 
