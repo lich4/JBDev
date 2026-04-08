@@ -1,4 +1,4 @@
-# [For Chinese](#简介)
+# [中文说明](#简介)
 
 ![](https://raw.githubusercontent.com/lich4/JBDev/main/screenshots/launch_debug_sysapp.png)  
 
@@ -9,7 +9,7 @@ https://github.com/user-attachments/assets/56ed7115-a267-4aa5-bb9e-1d4d838d651d
 ## Introduction
 
 JBDev is designed for jailbreak development and TrollStore development in Xcode. It provides the same development experience as a normal app: build → install → debug in Xcode. Tested environments:
-* Xcode 12-16
+* Xcode 12-26
 * iOS 12-16
 * arm64/arm64e
 * Checkra1n/Unc0ver/Taurine/Palera1n/Dopamine
@@ -320,7 +320,7 @@ Remove app sandbox directory failed with `rm` in Rootless/Roothide/trollstore en
 ## 简介
 
 JBDev用于Xcode越狱开发及巨魔开发，提供和普通App一样的开发体验，使用Xcode进行编译——安装——调试，已测试环境：
-* Xcode12-16
+* Xcode12-26
 * iOS12-16
 * arm64/arm64e
 * Checkra1n/Unc0ver/Taurine/Palera1n/Dopamine
