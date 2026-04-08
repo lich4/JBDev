@@ -4,7 +4,9 @@
 
 ![](https://raw.githubusercontent.com/lich4/JBDev/main/screenshots/launch_debug_tweak.png)  
 
-https://raw.githubusercontent.com/lich4/JBDev/main/screenshots/wait_debug.mp4
+
+https://github.com/user-attachments/assets/8ac6a300-0642-484a-8888-dc5712c250cb
+
 
 ## Introduction
 
@@ -38,7 +40,11 @@ JBDev is designed for jailbreak development and TrollStore development in Xcode.
 
 Notes:
 * Launch debug: launch the app via Xcode and make it wait for the debugger to attach
-* Attach debug: attach when the process is already running; LLDB usage: debugserver --attach=[pid|name] (same as Xcode)
+* Attach debug: attach when t
+
+https://github.com/user-attachments/assets/1e7996a3-71bb-4730-a7f4-2a9dcdcd9db6
+
+he process is already running; LLDB usage: debugserver --attach=[pid|name] (same as Xcode)
 * Wait debug: wait for the process to start and auto-attach; LLDB usage: debugserver -waitfor=[name] (same as Xcode)
 
 ### Testing & Usage
