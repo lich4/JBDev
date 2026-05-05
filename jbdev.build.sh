@@ -94,20 +94,29 @@ function doSign {
         ENT_PATH=${CODE_SIGN_ENTITLEMENTS}
     fi
     codesign --remove-signature ${TARGET_PATH}
-    if [ -f ${TARGET_PATH}/_CodeSignature ]; then
-        rm -rf ${TARGET_PATH}/_CodeSignature
-    fi
-    if [ -f ${TARGET_PATH}/embedded.mobileprovision ]; then
-        rm -rf ${TARGET_PATH}/embedded.mobileprovision
-    fi
-    if [ -f sign_file.py ]; then
-        echo ${PYTHON} sign_file.py ${BIN_PATH}
-        ${PYTHON} sign_file.py ${BIN_PATH}
+    if [ ! -z "${WRAPPER_EXTENSION}" ]; then
+        if [ -f ${TARGET_PATH}/_CodeSignature ]; then
+            rm -rf ${TARGET_PATH}/_CodeSignature
+        fi
+        if [ -f ${TARGET_PATH}/embedded.mobileprovision ]; then
+            rm -rf ${TARGET_PATH}/embedded.mobileprovision
+        fi
     fi
     if [ -f ${ENT_PATH} ]; then
-        echo "Find ${ENT_PATH}, Signing ..."
+        echo "Find ${ENT_PATH}"
         if [ -f ${BIN_PATH} ]; then
-            ldid -S${ENT_PATH} ${BIN_PATH}
+            if [ -z "${WRAPPER_EXTENSION}" ]; then
+                echo "Signing: ${BIN_PATH}"
+                ldid -S${ENT_PATH} ${BIN_PATH}
+            else
+                BIN_DIR=$(dirname "${BIN_PATH}")
+                find "${BIN_DIR}" -type f | while read -r FILE; do
+                    if file "$FILE" | grep -q "Mach-O"; then
+                        echo "Signing: ${FILE}"
+                        ldid -S"${ENT_PATH}" "$FILE"
+                    fi
+                done
+            fi
         else
             echo "Could not find binary ${BIN_PATH}, exit"
             return -1
