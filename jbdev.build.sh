@@ -4,6 +4,11 @@ UTIL=$1
 TARGET_PATH=${CODESIGNING_FOLDER_PATH}
 TARGET_SRC_PATH=${PROJECT_DIR}/${TARGET_NAME}
 
+if [ x$ENABLE_PREVIEWS == "xYES" ]; then
+    echo "Xcode Preview detected, skipping jbdev.build.sh."
+    exit 0
+fi
+
 if [ -z ${WRAPPER_EXTENSION} ]; then
     BIN_PATH=${TARGET_PATH}
 else
