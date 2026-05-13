@@ -27,9 +27,9 @@ JBDevJBTest用于测试JBDev的如下开发能力：
 
 &emsp;&emsp;配置文件
 * 确保theos项目的layout目录存在，同目录下增加layout_root/layout_rootless/layout_roothide分别对应有根/无根/隐根的diff
-* `JBDevTestApp`需要显式ldid签名，在其目录下配置`JBDevTestApp.plist`
-* `JBDevTestDaemon`需要显式ldid签名，在其目录下配置`JBDevTestDaemon.plist`
-* `JBDevTestTool`需要显式ldid签名，在其目录下配置`JBDevTestTool.plist`
+* `JBDevTestApp`需要显式ldid签名，在其目录下配置`JBDevTestApp.ent`
+* `JBDevTestDaemon`需要显式ldid签名，在其目录下配置`JBDevTestDaemon.ent`
+* `JBDevTestTool`需要显式ldid签名，在其目录下配置`JBDevTestTool.ent`
 * 将`jbdev.build.sh`放在`.xcodeproj`同级目录
 * 将`jbdev.plist`放在`.xcodeproj`同级目录，设置`type`为`jailbreak`
 
